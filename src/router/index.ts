@@ -1,20 +1,41 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router";
 import HomeView from "../views/HomeView.vue";
+import QueryQuestionByKnowledgeView from "@/views/QueryQuestionByKnowledgeView.vue";
+import LoginView from "@/views/LoginView.vue";
+import registerView from "@/views/RegisterView.vue";
+import UploadQuestionView from "@/views/UploadQuestionView.vue";
+import QuestionBucketView from "@/views/QuestionBucketView.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
     path: "/",
-    name: "home",
+    name: "Home",
     component: HomeView,
   },
   {
-    path: "/about",
-    name: "about",
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () =>
-      import(/* webpackChunkName: "about" */ "../views/AboutView.vue"),
+    path: "/search/question/by/kp",
+    name: "SearchQuestionByKp",
+    component: QueryQuestionByKnowledgeView,
+  },
+  {
+    path: "/login",
+    name: "Login",
+    component: LoginView,
+  },
+  {
+    path: "/register",
+    name: "Register",
+    component: registerView,
+  },
+  {
+    path: "/upload/question",
+    name: "UploadQuestion",
+    component: UploadQuestionView,
+  },
+  {
+    path: "/question/bucket",
+    name: "QuestionBucket",
+    component: QuestionBucketView,
   },
 ];
 
