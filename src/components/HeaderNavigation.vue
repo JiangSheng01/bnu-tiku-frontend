@@ -10,7 +10,7 @@ import {
 </script>
 
 <template>
-  <a-row type="flex" align="middle">
+  <a-row type="flex" align="middle" style="flex-wrap: nowrap">
     <a-col
       flex="120px"
       style="font-size: 18px; display: flex; align-items: center"

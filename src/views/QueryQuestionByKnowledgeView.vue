@@ -5,11 +5,11 @@
       <a-breadcrumb-item>知识点选题</a-breadcrumb-item>
     </a-breadcrumb>
     <div class="knowledge-content">
-      <a-row :gutter="[12, 12]" justify="center">
+      <a-row :gutter="[12, 12]" justify="center" style="flex-wrap: nowrap">
         <a-col style="width: 300px">
           <KnowledgePointTree @send="receiveData" />
         </a-col>
-        <a-col style="width: 1000px; padding-left: 30px">
+        <a-col style="padding-left: 24px; width: 1000px">
           <a-row :gutter="[12, 12]">
             <a-col :span="24"
               ><div>
@@ -140,30 +140,34 @@
 <script setup lang="ts">
 import KnowledgePointTree from "@/components/KnowledgePointTree.vue";
 import katex from "katex/types/katex";
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import { KatexVue } from "katex-vue";
 import axios from "axios";
 const allQuestions = ref([]);
-const currentPageNumber = ref<number>(1);
-const currentPageSize = ref<number>(10);
+const currentPageNumber = ref<number>(10);
+const currentPageSize = ref<number>(5);
 const selectedKp = ref("beforeMount");
 const total = ref(0);
 const clickedQuestionIds = ref(new Set());
 const loading = ref(true);
-const res = axios
-  .get(
-    `http://localhost:8080/question/search/kp/${encodeURIComponent(
-      "beforeMount"
-    )} / ${encodeURIComponent(currentPageNumber.value)} / ${encodeURIComponent(
-      currentPageSize.value
-    )}
+onMounted(() => {
+  const res = axios
+    .get(
+      `http://localhost:8080/question/search/kp/${encodeURIComponent(
+        "beforeMount"
+      )} / ${encodeURIComponent(
+        currentPageNumber.value
+      )} / ${encodeURIComponent(currentPageSize.value)}
     `
-  )
-  .then((res) => {
-    allQuestions.value = res.data.questions;
-    total.value = res.data.totalCount;
-  });
-loading.value = false;
+    )
+    .then((res) => {
+      allQuestions.value = res.data.questions;
+      total.value = res.data.totalCount;
+    })
+    .finally(() => {
+      loading.value = false;
+    });
+});
 const receiveData = (data: any) => {
   if (data.resultData != null && data.selectedKey != null) {
     allQuestions.value = data.resultData.questions;

@@ -8,7 +8,7 @@ export default {
 
 function renderKatex(el: HTMLElement) {
   const text = el.innerText;
-  const html = text.replace(/\$\$(.+?)\$\$/g, (_, math) => {
+  const html = text.replace(/\${1,2}(.+?)\${1,2}/g, (_, math) => {
     return katex.renderToString(math, {
       throwOnError: false,
       output: "mathml",

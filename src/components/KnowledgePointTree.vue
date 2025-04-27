@@ -54,7 +54,7 @@ const onSelect = async (selectedKeys: any, info: any) => {
     const res = await axios.get(
       `http://localhost:8080/question/search/kp/${encodeURIComponent(
         kpName
-      )}/${encodeURIComponent(1)}/${encodeURIComponent(5)}`
+      )}/${encodeURIComponent(1)}/${encodeURIComponent(10)}`
     );
     console.log(`📘 查询知识点「${kpName}」返回结果:`, res.data);
     emit("send", { resultData: res.data, selectedKey: kpName, loading: false });

@@ -17,7 +17,7 @@ import { ref } from "vue";
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 810px;
+  height: 85vh;
   font-size: 25px;
 }
 </style>
