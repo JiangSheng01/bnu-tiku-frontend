@@ -9,7 +9,7 @@
         <a-col style="width: 300px">
           <KnowledgePointTree @send="receiveData" />
         </a-col>
-        <a-col style="padding-left: 24px; width: 1000px">
+        <a-col style="padding-left: 32px; width: 1000px">
           <a-row :gutter="[12, 12]">
             <a-col :span="24"
               ><div>
@@ -39,7 +39,7 @@
                       <div v-else-if="q.difficulty < 0.8">正常</div>
                       <div v-else-if="q.difficulty < 0.9">较易</div>
                       <div v-else-if="q.difficulty < 0.95">简单</div>
-                      <div v-else-if="q.diffiulty < 1">很简单</div>
+                      <div v-else-if="q.difficulty < 1">很简单</div>
                     </div>
                     <div class="vertical-line"></div>
                     <div class="question-tag">{{ q.knowledge_point }}</div>
@@ -144,8 +144,8 @@ import { onMounted, ref } from "vue";
 import { KatexVue } from "katex-vue";
 import axios from "axios";
 const allQuestions = ref([]);
-const currentPageNumber = ref<number>(10);
-const currentPageSize = ref<number>(5);
+const currentPageNumber = ref<number>(1);
+const currentPageSize = ref<number>(10);
 const selectedKp = ref("beforeMount");
 const total = ref(0);
 const clickedQuestionIds = ref(new Set());
@@ -189,6 +189,7 @@ const onChange = async (pageNumber: number) => {
   allQuestions.value = res.data.questions;
   total.value = res.data.totalCount;
   loading.value = false;
+  console.log(allQuestions.value);
 };
 
 const onCardClick = (id: any) => {
