@@ -88,7 +88,10 @@ let expandedKeys = ref([
 const emit = defineEmits(["send"]);
 const onSelect = async (selectedKeys: any, info: any) => {
   emit("send", { resultData: null, selectedKey: null, loading: true });
-  if (!info.selected) return;
+  if (!info.selected) {
+    emit("send", { resultData: null, selectedKey: null, loading: false });
+    return;
+  }
   const kpName = info.node.title;
   try {
     const res = await axios.get(

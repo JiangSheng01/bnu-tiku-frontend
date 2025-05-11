@@ -1,14 +1,3 @@
-<script setup lang="ts">
-import {
-  CloudTwoTone,
-  ContainerTwoTone,
-  CrownTwoTone,
-  HomeTwoTone,
-  ShoppingTwoTone,
-  SmileTwoTone,
-} from "@ant-design/icons-vue";
-</script>
-
 <template>
   <a-row type="flex" align="middle" style="flex-wrap: nowrap">
     <a-col
@@ -21,7 +10,8 @@ import {
     <a-col flex="300px" style="display: flex; align-items: center">
       <a-menu
         mode="horizontal"
-        v-model:selectedKeys="selectedKeys"
+        v-model:selectedKeys="selectedLeftKeys"
+        @click="onLeftMenuClick"
         :style="{ lineHeight: '63px', marginLeft: '10px' }"
       >
         <a-menu-item key="1" class="custom-menu-item">
@@ -63,13 +53,14 @@ import {
       "
     >
       <a-input-search
-        v-model:value="value"
+        v-model:value="keyword"
         placeholder="输入关键词搜题"
-        enter-button="搜索"
-        @search="onSearch"
+        @search="onSearchQuestion"
         size="large"
         style="width: 600px"
-      />
+      >
+        <template #enterButton>搜索</template>
+      </a-input-search>
     </a-col>
 
     <a-col
@@ -78,8 +69,9 @@ import {
     >
       <a-menu
         mode="horizontal"
-        v-model:selectedKeys="selectedKeys"
+        v-model:selectedKeys="selectedRightKeys"
         :style="{ lineHeight: '63px' }"
+        @click="onRightMenuClick"
       >
         <a-menu-item key="1" class="custom-menu-item">
           <template #icon>
@@ -93,9 +85,8 @@ import {
           <template #icon>
             <SmileTwoTone style="font-size: 16px; margin-right: 1px" />
           </template>
-          <span class="custom-text"
-            ><router-link to="/login">登录</router-link></span
-          >
+          <span class="custom-text">登录</span>
+          <LoginModal v-model:visible="showLogin" />
         </a-menu-item>
         <a-menu-item key="3" class="custom-menu-item">
           <template #icon>
@@ -109,6 +100,47 @@ import {
     </a-col>
   </a-row>
 </template>
+
+<script setup lang="ts">
+import {
+  CloudTwoTone,
+  ContainerTwoTone,
+  CrownTwoTone,
+  HomeTwoTone,
+  ShoppingTwoTone,
+  SmileTwoTone,
+} from "@ant-design/icons-vue";
+import { useRouter } from "vue-router";
+import { ref } from "vue";
+import LoginModal from "@/components/LoginModal.vue";
+
+const showLogin = ref(false);
+const router = useRouter();
+const keyword = ref("");
+const selectedRightKeys = ref<string[]>([]);
+const selectedLeftKeys = ref<string[]>([]);
+
+function onRightMenuClick(e: { key: string }) {
+  if (selectedLeftKeys.value.length > 0) {
+    selectedLeftKeys.value = [];
+  }
+  if (e.key == "2") {
+    showLogin.value = true;
+    selectedRightKeys.value = [];
+  }
+}
+function onLeftMenuClick() {
+  if (selectedRightKeys.value.length > 0) {
+    selectedRightKeys.value = [];
+  }
+}
+function onSearchQuestion() {
+  router.push({
+    path: "/search/question/by/keyword",
+    query: { kw: keyword.value.trim() },
+  });
+}
+</script>
 
 <style scoped>
 .custom-menu-item {

@@ -1,5 +1,3 @@
-<script setup lang="ts"></script>
-
 <template>
   <div class="login-view">
     <a-breadcrumb :style="{ margin: '16px 0', marginLeft: '20px' }">
@@ -7,8 +5,10 @@
       <a-breadcrumb-item>登录</a-breadcrumb-item> </a-breadcrumb
     ><br />
   </div>
-  <div class="login-content">登录页</div>
+  <div class="login-content"></div>
 </template>
+
+<script setup lang="ts"></script>
 
 <style scoped>
 .login-content {

@@ -5,6 +5,7 @@ import LoginView from "@/views/LoginView.vue";
 import registerView from "@/views/RegisterView.vue";
 import UploadQuestionView from "@/views/UploadQuestionView.vue";
 import QuestionBucketView from "@/views/QuestionBucketView.vue";
+import QueryQuestionByKeywordView from "@/views/QueryQuestionByKeywordView.vue";
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -16,6 +17,11 @@ const routes: Array<RouteRecordRaw> = [
     path: "/search/question/by/kp",
     name: "SearchQuestionByKp",
     component: QueryQuestionByKnowledgeView,
+  },
+  {
+    path: "/search/question/by/keyword",
+    name: "SearchQuestionByKeyword",
+    component: QueryQuestionByKeywordView,
   },
   {
     path: "/login",
