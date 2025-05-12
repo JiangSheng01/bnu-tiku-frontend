@@ -11,8 +11,7 @@
       <!-- 左侧二维码区域 -->
       <a-col :span="8" class="qr-section">
         <div class="qr-container">
-          <div class="qr-tip">微信扫码登录</div>
-          <img :src="qrCodeUrl" alt="扫码登录" class="qr-image" />
+          <img src="../assets/bnuai_logo.png" alt="扫码登录" class="qr-image" />
         </div>
       </a-col>
 
@@ -113,6 +112,7 @@
 <script setup lang="ts">
 import { ref, defineModel, h } from "vue";
 import { EyeOutlined, EyeInvisibleOutlined } from "@ant-design/icons-vue";
+import bnuAiImage from "../../public/bnuai_logo.png";
 
 const visible = defineModel<boolean>("visible", { default: false });
 const username = ref("");
@@ -143,16 +143,8 @@ const psVisible = ref(false);
 
 .qr-image {
   margin-top: 8px;
-  background-color: #f5f5f5;
-  width: 180px;
-  height: 180px;
-  border-radius: 4px;
-  border: solid 1px #d8d8d8;
-}
-
-.qr-tip {
-  color: #3c3c3c;
-  font-size: 18px;
+  width: 200px;
+  height: 160px;
 }
 
 .divider-col {
