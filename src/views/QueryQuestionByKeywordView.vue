@@ -41,7 +41,7 @@ import QuestionCard from "@/components/QuestionCard.vue";
 import { useRoute } from "vue-router";
 import { watch } from "vue";
 import { ref } from "vue";
-import axios from "axios";
+import { getQuestionsByKeyword } from "@/api/question";
 const route = useRoute();
 const keyword = ref(route.query.kw || "");
 const allQuestions = ref([]);
@@ -52,12 +52,10 @@ let currentPageSize = ref(10);
 const searchQuestionsByKeyword = async () => {
   const searchParam = keyword.value.toString().trim();
   try {
-    const res = await axios.get(
-      `http://localhost:8080/question/search/keyword/${encodeURIComponent(
-        searchParam
-      )}/${encodeURIComponent(currentPageNumber.value)}/${encodeURIComponent(
-        currentPageSize.value
-      )}`
+    const res = await getQuestionsByKeyword(
+      searchParam,
+      keyword.value.toString(),
+      currentPageSize.value.toString()
     );
     allQuestions.value = res.data.questions;
     total.value = res.data.totalCount;

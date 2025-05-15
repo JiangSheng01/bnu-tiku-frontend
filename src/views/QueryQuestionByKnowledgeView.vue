@@ -44,6 +44,7 @@ import { onMounted, ref } from "vue";
 
 import axios from "axios";
 import QuestionCard from "@/components/QuestionCard.vue";
+import { getQuestionsByKp } from "@/api/question";
 const allQuestions = ref([]);
 const currentPageNumber = ref<number>(1);
 const currentPageSize = ref<number>(10);
@@ -51,15 +52,7 @@ const selectedKp = ref("beforeMount");
 const total = ref(0);
 const loading = ref(true);
 onMounted(() => {
-  const res = axios
-    .get(
-      `http://localhost:8080/question/search/kp/${encodeURIComponent(
-        "beforeMount"
-      )} / ${encodeURIComponent(
-        currentPageNumber.value
-      )} / ${encodeURIComponent(currentPageSize.value)}
-    `
-    )
+  const res = getQuestionsByKp("beforeMount", "1", "10")
     .then((res) => {
       allQuestions.value = res.data.questions;
       total.value = res.data.totalCount;
@@ -80,13 +73,10 @@ const receiveData = (data: any) => {
 
 const onChange = async (pageNumber: number) => {
   loading.value = true;
-  const res = await axios.get(
-    `http://localhost:8080/question/search/kp/${encodeURIComponent(
-      selectedKp.value
-    )}/${encodeURIComponent(pageNumber)}/${encodeURIComponent(
-      currentPageSize.value
-    )}
-    `
+  const res = await getQuestionsByKp(
+    selectedKp.value,
+    pageNumber.toString(),
+    currentPageSize.value.toString()
   );
   allQuestions.value = res.data.questions;
   total.value = res.data.totalCount;

@@ -24,11 +24,6 @@ const routes: Array<RouteRecordRaw> = [
     component: QueryQuestionByKeywordView,
   },
   {
-    path: "/login",
-    name: "Login",
-    component: LoginView,
-  },
-  {
     path: "/register",
     name: "Register",
     component: registerView,

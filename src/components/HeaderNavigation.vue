@@ -44,12 +44,12 @@
     </a-col>
 
     <a-col
-      flex="auto"
       style="
         display: flex;
         justify-content: center;
         align-items: center;
         border-radius: 1px;
+        width: 1060px;
       "
     >
       <a-input-search
@@ -63,40 +63,46 @@
       </a-input-search>
     </a-col>
 
-    <a-col
-      flex="100px"
-      style="display: flex; align-items: center; justify-content: flex-end"
-    >
-      <a-menu
-        mode="horizontal"
-        v-model:selectedKeys="selectedRightKeys"
-        :style="{ lineHeight: '63px' }"
-        @click="onRightMenuClick"
-      >
-        <a-menu-item key="1" class="custom-menu-item">
-          <template #icon>
-            <ShoppingTwoTone style="font-size: 16px; margin-right: 1px" />
-          </template>
-          <span class="custom-text"
-            ><router-link to="/question/bucket">试题篮</router-link></span
-          >
-        </a-menu-item>
-        <a-menu-item key="2" class="custom-menu-item">
-          <template #icon>
-            <SmileTwoTone style="font-size: 16px; margin-right: 1px" />
-          </template>
-          <span class="custom-text">登录</span>
-          <LoginModal v-model:visible="showLogin" />
-        </a-menu-item>
-        <a-menu-item key="3" class="custom-menu-item">
-          <template #icon>
-            <crown-two-tone style="font-size: 16px; margin-right: 1px" />
-          </template>
-          <span class="custom-text"
-            ><router-link to="/register">注册</router-link></span
-          >
-        </a-menu-item>
-      </a-menu>
+    <a-col flex="400px">
+      <a-row>
+        <a-col style="width: 320px">
+          <div style="width: 100%" class="custom-text">
+            <shopping-two-tone style="margin-right: 6px" />
+            <router-link to="/question/bucket">试题篮</router-link>
+          </div>
+        </a-col>
+        <a-col style="width: 80px" v-if="token.length == 0">
+          <div style="width: 100%" class="custom-text">
+            <SmileTwoTone />
+            <a @click="loginShow" style="margin-left: 6px">登录</a>
+          </div>
+          <UserModal v-model:visible="showLogin" />
+        </a-col>
+        <a-col
+          v-if="token.length != 0"
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: right;
+            width: 80px;
+          "
+        >
+          <a-dropdown placement="bottomCenter">
+            <template #overlay>
+              <a-menu @click="handleMenuClick">
+                <a-menu-item key="profile">个人简介</a-menu-item>
+                <a-menu-item key="settings">设置</a-menu-item>
+                <a-menu-divider />
+                <a-menu-item key="logout" @click="logout">退出登录</a-menu-item>
+              </a-menu>
+            </template>
+            <a-avatar
+              style="cursor: pointer; background-color: #87d068"
+              icon="user"
+            />
+          </a-dropdown>
+        </a-col>
+      </a-row>
     </a-col>
   </a-row>
 </template>
@@ -105,41 +111,33 @@
 import {
   CloudTwoTone,
   ContainerTwoTone,
-  CrownTwoTone,
   HomeTwoTone,
   ShoppingTwoTone,
   SmileTwoTone,
 } from "@ant-design/icons-vue";
 import { useRouter } from "vue-router";
 import { ref } from "vue";
-import LoginModal from "@/components/LoginModal.vue";
-
+import UserModal from "@/components/UserModal.vue";
+import { useUserStore } from "@/stores/user";
+import { storeToRefs } from "pinia";
+const userStore = useUserStore();
+const { token } = storeToRefs(userStore);
 const showLogin = ref(false);
 const router = useRouter();
 const keyword = ref("");
-const selectedRightKeys = ref<string[]>([]);
-const selectedLeftKeys = ref<string[]>([]);
+const loginShow = () => {
+  showLogin.value = true;
+};
 
-function onRightMenuClick(e: { key: string }) {
-  if (selectedLeftKeys.value.length > 0) {
-    selectedLeftKeys.value = [];
-  }
-  if (e.key == "2") {
-    showLogin.value = true;
-    selectedRightKeys.value = [];
-  }
-}
-function onLeftMenuClick() {
-  if (selectedRightKeys.value.length > 0) {
-    selectedRightKeys.value = [];
-  }
-}
 function onSearchQuestion() {
   router.push({
     path: "/search/question/by/keyword",
     query: { kw: keyword.value.trim() },
   });
 }
+const logout = () => {
+  userStore.logout();
+};
 </script>
 
 <style scoped>
@@ -147,6 +145,7 @@ function onSearchQuestion() {
   font-size: 16px;
 }
 .custom-text {
+  text-align: right;
   font-size: 16px;
 }
 </style>

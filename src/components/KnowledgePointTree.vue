@@ -66,6 +66,7 @@ import { debounce } from "lodash";
 import treeData from "@/Data/TreeData";
 import axios, { CancelTokenSource } from "axios";
 import { defineEmits } from "vue";
+import { getQuestionsByKp } from "@/api/question";
 let searchBoxText = ref("");
 let selectedKeys = ref([]);
 let searchResult = ref();
@@ -95,7 +96,7 @@ const onSelect = async (selectedKeys: any, info: any) => {
   const kpName = info.node.title;
   try {
     const res = await axios.get(
-      `http://localhost:8080/question/search/kp/${encodeURIComponent(
+      `http://localhost:8080/api/question/search/kp/${encodeURIComponent(
         kpName
       )}/${encodeURIComponent(1)}/${encodeURIComponent(10)}`
     );
@@ -124,7 +125,7 @@ const onSearch = async (q: any) => {
 
   try {
     const res = await axios.get(
-      `http://localhost:8080/kp/search/${encodeURIComponent(q)}`,
+      `http://localhost:8080/api/kp/search/${encodeURIComponent(q)}`,
       {
         cancelToken: cancelTokenSource.token,
       }
@@ -158,11 +159,7 @@ const onSearchQuestion = async (name: string) => {
   emit("send", { resultData: null, selectedKey: null, loading: true });
   const kpName = name.trim();
   try {
-    const res = await axios.get(
-      `http://localhost:8080/question/search/kp/${encodeURIComponent(
-        kpName
-      )}/${encodeURIComponent(1)}/${encodeURIComponent(10)}`
-    );
+    const res = await getQuestionsByKp(kpName, "1", "10");
     console.log(`📘 查询知识点「${kpName}」返回结果:`, res.data);
     emit("send", { resultData: res.data, selectedKey: kpName, loading: false });
   } catch (err) {

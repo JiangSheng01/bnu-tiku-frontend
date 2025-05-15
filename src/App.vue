@@ -8,11 +8,15 @@
     </a-layout-content>
     <a-layout-footer class="footer">
       BNU Tiku Frontend ©2025 Created by ht
+      <a href="https://github.com/Colentine/bnu-tiku-frontend"
+        ><GithubOutlined
+      /></a>
     </a-layout-footer>
   </a-layout>
 </template>
 <script setup lang="ts">
 import HeaderNavigation from "@/components/HeaderNavigation.vue";
+import { GithubOutlined } from "@ant-design/icons-vue";
 </script>
 <style scoped>
 .layout {
