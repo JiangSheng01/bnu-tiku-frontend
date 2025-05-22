@@ -5,8 +5,10 @@ export const useUserStore = defineStore("user", {
     token: localStorage.getItem("token") || "",
     userInfo: null as null | {
       id: number;
-      name: string;
-      role: string;
+      userName: string;
+      userAccount: string;
+      userRole: string;
+      avatarUrl: string;
     },
   }),
 

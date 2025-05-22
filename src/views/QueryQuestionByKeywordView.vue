@@ -54,7 +54,7 @@ const searchQuestionsByKeyword = async () => {
   try {
     const res = await getQuestionsByKeyword(
       searchParam,
-      keyword.value.toString(),
+      currentPageNumber.value.toString(),
       currentPageSize.value.toString()
     );
     allQuestions.value = res.data.questions;

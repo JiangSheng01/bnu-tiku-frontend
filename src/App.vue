@@ -17,6 +17,8 @@
 <script setup lang="ts">
 import HeaderNavigation from "@/components/HeaderNavigation.vue";
 import { GithubOutlined } from "@ant-design/icons-vue";
+import { syncUserFromServer } from "@/api/user";
+syncUserFromServer();
 </script>
 <style scoped>
 .layout {

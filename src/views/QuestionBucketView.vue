@@ -1,4 +1,7 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { Bubble } from "ant-design-x-vue";
+import { Flex } from "ant-design-vue";
+</script>
 
 <template>
   <div class="question-bucket-view">

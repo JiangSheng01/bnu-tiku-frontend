@@ -18,12 +18,14 @@ export function getQuestionsByKp(
 
 export function getQuestionsByKeyword(
   keyword: string,
-  pageNumber: string,
+  currentPageNumber: string,
   currentPageSize: string
 ) {
   return request.get(
     `/question/search/keyword/${encodeURIComponent(
       keyword
-    )}/${encodeURIComponent(pageNumber)}/${encodeURIComponent(currentPageSize)}`
+    )}/${encodeURIComponent(currentPageNumber)}/${encodeURIComponent(
+      currentPageSize
+    )}`
   );
 }

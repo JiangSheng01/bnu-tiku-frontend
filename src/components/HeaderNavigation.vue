@@ -65,7 +65,13 @@
 
     <a-col flex="400px">
       <a-row>
-        <a-col style="width: 320px">
+        <a-col style="width: 240px">
+          <div style="width: 100%" class="custom-text">
+            <a @click="chatShow" style="margin-right: 12px">✨ AI搜题</a>
+          </div>
+          <ChatModal v-model:visible="showChat" />
+        </a-col>
+        <a-col style="width: 80px">
           <div style="width: 100%" class="custom-text">
             <shopping-two-tone style="margin-right: 6px" />
             <router-link to="/question/bucket">试题篮</router-link>
@@ -99,6 +105,7 @@
             <a-avatar
               style="cursor: pointer; background-color: #87d068"
               icon="user"
+              @click="showUserInfo"
             />
           </a-dropdown>
         </a-col>
@@ -118,18 +125,32 @@ import {
 import { useRouter } from "vue-router";
 import { ref } from "vue";
 import UserModal from "@/components/UserModal.vue";
+import ChatModal from "@/components/ChatModal.vue";
 import { useUserStore } from "@/stores/user";
 import { storeToRefs } from "pinia";
 const userStore = useUserStore();
-const { token } = storeToRefs(userStore);
+const { token, userInfo } = storeToRefs(userStore);
 const showLogin = ref(false);
+const showChat = ref(false);
 const router = useRouter();
 const keyword = ref("");
 const loginShow = () => {
   showLogin.value = true;
 };
 
+const chatShow = () => {
+  showChat.value = true;
+};
+
+const showUserInfo = () => {
+  console.log(token.value);
+  if (userInfo.value != null) {
+    console.log(userInfo.value);
+  }
+};
+
 function onSearchQuestion() {
+  alert(keyword.value.trim());
   router.push({
     path: "/search/question/by/keyword",
     query: { kw: keyword.value.trim() },
