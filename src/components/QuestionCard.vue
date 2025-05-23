@@ -3,29 +3,32 @@
     <a-card
       head-style="font-weight: normal; height: 22px"
       hoverable
-      @click="onCardClick(q.question_id)"
       :loading="loading"
     >
       <template #title>
-        <div class="question-title">{{ q.question_source }}</div>
-        <div class="question-tags">
-          <div class="question-tag">
-            <div v-if="q.simple_question_type == 0">单选题</div>
-            <div v-if="q.simple_question_type == 1">多选题</div>
-            <div v-if="q.simple_question_type == 2">填空题</div>
-            <div v-if="q.simple_question_type == 3">简答题</div>
-            <div v-if="q.simple_question_type == 4">判断题</div>
+        <div>
+          <div class="question-title">
+            {{ q.question_source }}
           </div>
-          <div class="vertical-line"></div>
-          <div class="question-tag">
-            <div v-if="q.difficulty < 0.7">稍难</div>
-            <div v-else-if="q.difficulty < 0.8">正常</div>
-            <div v-else-if="q.difficulty < 0.9">较易</div>
-            <div v-else-if="q.difficulty < 0.95">简单</div>
-            <div v-else-if="q.difficulty < 1">很简单</div>
+          <div class="question-tags">
+            <div class="question-tag">
+              <div v-if="q.simple_question_type == 0">单选题</div>
+              <div v-if="q.simple_question_type == 1">多选题</div>
+              <div v-if="q.simple_question_type == 2">填空题</div>
+              <div v-if="q.simple_question_type == 3">简答题</div>
+              <div v-if="q.simple_question_type == 4">判断题</div>
+            </div>
+            <div class="vertical-line"></div>
+            <div class="question-tag">
+              <div v-if="q.difficulty < 0.7">稍难</div>
+              <div v-else-if="q.difficulty < 0.8">正常</div>
+              <div v-else-if="q.difficulty < 0.9">较易</div>
+              <div v-else-if="q.difficulty < 0.95">简单</div>
+              <div v-else-if="q.difficulty < 1">很简单</div>
+            </div>
+            <div class="vertical-line"></div>
+            <div class="question-tag">{{ q.knowledge_point }}</div>
           </div>
-          <div class="vertical-line"></div>
-          <div class="question-tag">{{ q.knowledge_point }}</div>
         </div>
       </template>
       <div
@@ -34,6 +37,7 @@
           padding-bottom: 20px;
           border-bottom: #ededed 1px solid;
         "
+        @click="onCardClick(q.question_id)"
       >
         <div v-if="q.question_type == 0">
           <div v-katex>{{ q.stem }}</div>
@@ -51,12 +55,6 @@
               </div>
               <div v-katex>{{ q.question_explanation }}</div>
             </div>
-          </div>
-          <div class="actions">
-            <div class="action">纠错</div>
-            <div class="action">详情</div>
-            <div class="action">收藏</div>
-            <a-button class="add-question-bucket"> 加入试题篮 </a-button>
           </div>
         </div>
         <div v-else>
@@ -90,13 +88,13 @@
               </div>
             </div>
           </div>
-          <div class="actions">
-            <div class="action">纠错</div>
-            <div class="action">详情</div>
-            <div class="action">收藏</div>
-            <a-button class="add-question-bucket"> 加入试题篮 </a-button>
-          </div>
         </div>
+      </div>
+      <div class="actions">
+        <div class="action">纠错</div>
+        <div class="action">详情</div>
+        <div class="action">收藏</div>
+        <a-button class="add-question-bucket"> 加入试题篮 </a-button>
       </div>
     </a-card>
   </a-col>

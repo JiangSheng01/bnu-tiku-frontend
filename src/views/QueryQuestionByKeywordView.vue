@@ -65,6 +65,8 @@ const searchQuestionsByKeyword = async () => {
   }
 };
 
+searchQuestionsByKeyword();
+
 const onChange = async () => {
   await searchQuestionsByKeyword();
 };

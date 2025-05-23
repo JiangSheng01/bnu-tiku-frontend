@@ -81,9 +81,9 @@
       <a-row>
         <div class="modal-tip">
           Backend Powered by Spring Boot
-          <a href="https://github.com/Colentine/bnu_tiku_backend"
-            ><GithubOutlined style="margin-left: 6px; margin-bottom: 3px"
-          /></a>
+          <!--          <a href="https://github.com/Colentine/bnu_tiku_backend"-->
+          <!--            ><GithubOutlined style="margin-left: 6px; margin-bottom: 3px"-->
+          <!--          /></a>-->
         </div>
       </a-row>
     </a-col>

@@ -1,10 +1,15 @@
 <template>
   <a-row type="flex" align="middle" style="flex-wrap: nowrap">
     <a-col
-      flex="120px"
+      flex="160px"
       style="font-size: 18px; display: flex; align-items: center"
     >
-      <router-link to="/">BNU智慧题库</router-link>
+      <router-link to="/"
+        ><img
+          src="../assets/bnuai_logo1.png"
+          width="50px"
+        />京师智慧题库</router-link
+      >
     </a-col>
 
     <a-col flex="300px" style="display: flex; align-items: center">
@@ -32,24 +37,24 @@
             ></span
           >
         </a-menu-item>
-        <a-menu-item key="3" class="custom-menu-item">
-          <template #icon>
-            <CloudTwoTone style="font-size: 16px; margin-right: 1px" />
-          </template>
-          <span class="custom-text"
-            ><router-link to="/upload/question">上传习题</router-link></span
-          >
-        </a-menu-item>
+        <!--        <a-menu-item key="3" class="custom-menu-item">-->
+        <!--          <template #icon>-->
+        <!--            <CloudTwoTone style="font-size: 16px; margin-right: 1px" />-->
+        <!--          </template>-->
+        <!--          <span class="custom-text"-->
+        <!--            ><router-link to="/upload/question">上传习题</router-link></span-->
+        <!--          >-->
+        <!--        </a-menu-item>-->
       </a-menu>
     </a-col>
 
     <a-col
+      flex="1"
       style="
         display: flex;
         justify-content: center;
         align-items: center;
         border-radius: 1px;
-        width: 1060px;
       "
     >
       <a-input-search
@@ -57,7 +62,7 @@
         placeholder="输入关键词搜题"
         @search="onSearchQuestion"
         size="large"
-        style="width: 600px"
+        style="width: 400px"
       >
         <template #enterButton>搜索</template>
       </a-input-search>
@@ -67,7 +72,8 @@
       <a-row>
         <a-col style="width: 240px">
           <div style="width: 100%" class="custom-text">
-            <a @click="chatShow" style="margin-right: 12px">✨ AI搜题</a>
+            <!--            <a @click="chatShow" style="margin-right: 12px">✨ AI搜题</a>-->
+            <a style="margin-right: 12px">✨ AI搜题</a>
           </div>
           <ChatModal v-model:visible="showChat" />
         </a-col>
@@ -150,7 +156,7 @@ const showUserInfo = () => {
 };
 
 function onSearchQuestion() {
-  alert(keyword.value.trim());
+  // alert(keyword.value.trim());
   router.push({
     path: "/search/question/by/keyword",
     query: { kw: keyword.value.trim() },

@@ -47,7 +47,8 @@
             "
             @click="onSearchQuestion(item.name)"
           >
-            <SmileOutlined /> {{ item.name }}
+            <!--            <SmileOutlined /> {{ item.name }}-->
+            {{ item.name }}
           </a-button>
         </div>
       </div>
@@ -141,7 +142,7 @@ const onSearch = async (q: any) => {
   }
 };
 
-const debouncedFetch = debounce(onSearch, 300);
+const debouncedFetch = debounce(onSearch, 1000);
 
 watch(searchBoxText, (newSearchText: string) => {
   if (newSearchText == "") {

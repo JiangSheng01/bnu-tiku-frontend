@@ -8,9 +8,9 @@
     </a-layout-content>
     <a-layout-footer class="footer">
       BNU Tiku Frontend ©2025 Created by ht
-      <a href="https://github.com/Colentine/bnu-tiku-frontend"
-        ><GithubOutlined
-      /></a>
+      <!--      <a href="https://github.com/Colentine/bnu-tiku-frontend"-->
+      <!--        ><GithubOutlined-->
+      <!--      /></a>-->
     </a-layout-footer>
   </a-layout>
 </template>
