@@ -1,18 +1,16 @@
 <template>
   <a-row type="flex" align="middle" style="flex-wrap: nowrap">
     <a-col
-      flex="160px"
+      flex="250px"
       style="font-size: 18px; display: flex; align-items: center"
     >
       <router-link to="/"
-        ><img
-          src="../assets/bnuai_logo1.png"
-          width="50px"
-        />京师智慧题库</router-link
+        ><img src="../assets/hsaBNU.png" width="40px" />
+        北京师大附中智慧题库</router-link
       >
     </a-col>
 
-    <a-col flex="300px" style="display: flex; align-items: center">
+    <a-col flex="400px" style="display: flex; align-items: center">
       <a-menu
         mode="horizontal"
         v-model:selectedKeys="selectedLeftKeys"
@@ -70,26 +68,26 @@
 
     <a-col flex="400px">
       <a-row>
-        <a-col style="width: 240px">
-          <div style="width: 100%" class="custom-text">
-            <!--            <a @click="chatShow" style="margin-right: 12px">✨ AI搜题</a>-->
-            <a style="margin-right: 12px">✨ AI搜题</a>
-          </div>
-          <ChatModal v-model:visible="showChat" />
-        </a-col>
-        <a-col style="width: 80px">
+        <!--        <a-col style="width: 240px">-->
+        <!--          <div style="width: 100%" class="custom-text">-->
+        <!--            &lt;!&ndash;            <a @click="chatShow" style="margin-right: 12px">✨ AI搜题</a>&ndash;&gt;-->
+        <!--            <a style="margin-right: 12px">✨ AI搜题</a>-->
+        <!--          </div>-->
+        <!--          <ChatModal v-model:visible="showChat" />-->
+        <!--        </a-col>-->
+        <a-col style="width: 400px">
           <div style="width: 100%" class="custom-text">
             <shopping-two-tone style="margin-right: 6px" />
             <router-link to="/question/bucket">试题篮</router-link>
           </div>
         </a-col>
-        <a-col style="width: 80px" v-if="token.length == 0">
-          <div style="width: 100%" class="custom-text">
-            <SmileTwoTone />
-            <a @click="loginShow" style="margin-left: 6px">登录</a>
-          </div>
-          <UserModal v-model:visible="showLogin" />
-        </a-col>
+        <!--        <a-col style="width: 80px" v-if="token.length == 0">-->
+        <!--          <div style="width: 100%" class="custom-text">-->
+        <!--            <SmileTwoTone />-->
+        <!--            <a @click="loginShow" style="margin-left: 6px">登录</a>-->
+        <!--          </div>-->
+        <!--          <UserModal v-model:visible="showLogin" />-->
+        <!--        </a-col>-->
         <a-col
           v-if="token.length != 0"
           style="

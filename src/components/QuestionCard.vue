@@ -1,112 +1,134 @@
 <template>
-  <a-col :span="24" v-for="q in allQuestions" :key="q.question_id">
-    <a-card
-      head-style="font-weight: normal; height: 22px"
-      hoverable
-      :loading="loading"
-    >
-      <template #title>
-        <div>
-          <div class="question-title">
-            {{ q.question_source }}
-          </div>
-          <div class="question-tags">
-            <div class="question-tag">
-              <div v-if="q.simple_question_type == 0">单选题</div>
-              <div v-if="q.simple_question_type == 1">多选题</div>
-              <div v-if="q.simple_question_type == 2">填空题</div>
-              <div v-if="q.simple_question_type == 3">简答题</div>
-              <div v-if="q.simple_question_type == 4">判断题</div>
-            </div>
-            <div class="vertical-line"></div>
-            <div class="question-tag">
-              <div v-if="q.difficulty < 0.7">稍难</div>
-              <div v-else-if="q.difficulty < 0.8">正常</div>
-              <div v-else-if="q.difficulty < 0.9">较易</div>
-              <div v-else-if="q.difficulty < 0.95">简单</div>
-              <div v-else-if="q.difficulty < 1">很简单</div>
-            </div>
-            <div class="vertical-line"></div>
-            <div class="question-tag">{{ q.knowledge_point }}</div>
-          </div>
-        </div>
-      </template>
-      <div
-        style="
-          margin-bottom: 20px;
-          padding-bottom: 20px;
-          border-bottom: #ededed 1px solid;
-        "
-        @click="onCardClick(q.question_id)"
+  <div class="question-card">
+    <a-col :span="24" v-for="q in allQuestions" :key="q.question_id">
+      <a-card
+        head-style="font-weight: normal; height: 22px"
+        hoverable
+        :loading="loading"
+        style="margin-bottom: 10px"
       >
-        <div v-if="q.question_type == 0">
-          <div v-katex>{{ q.stem }}</div>
-          <div v-if="clickedQuestionIds.has(q.question_id)">
-            <div
-              style="
-                margin-top: 20px;
-                padding-top: 20px;
-                border-top: #ededed 1px dashed;
-              "
-            >
-              <div>
-                答案：
-                <span v-katex>{{ q.question_answer }}</span>
+        <template #title>
+          <div>
+            <div class="question-title">
+              {{ q.question_source }}
+            </div>
+            <div class="question-tags">
+              <div class="question-tag">
+                <div v-if="q.simple_question_type == 0">单选题</div>
+                <div v-if="q.simple_question_type == 1">多选题</div>
+                <div v-if="q.simple_question_type == 2">填空题</div>
+                <div v-if="q.simple_question_type == 3">简答题</div>
+                <div v-if="q.simple_question_type == 4">判断题</div>
               </div>
-              <div v-katex>{{ q.question_explanation }}</div>
+              <div class="vertical-line"></div>
+              <div class="question-tag">
+                <div v-if="q.difficulty < 0.5">困难</div>
+                <div v-else-if="q.difficulty < 0.65">较难</div>
+                <div v-else-if="q.difficulty < 0.8">适中</div>
+                <div v-else-if="q.difficulty < 0.9">较易</div>
+                <div v-else-if="q.difficulty < 1">容易</div>
+              </div>
+              <div class="vertical-line"></div>
+              <div class="question-tag">{{ q.knowledge_point }}</div>
             </div>
           </div>
-        </div>
-        <div v-else>
-          <div class="stem-container" v-katex>
-            {{ q.composite_question_stem }}
-          </div>
-          <div
-            v-for="(sub_question, index) in JSON.parse(q.sub_questions)"
-            :key="sub_question.question_id"
-          >
-            ({{ index + 1 }})
-            <span class="stem-container" v-katex>{{ sub_question.stem }}</span>
-          </div>
-          <div v-if="clickedQuestionIds.has(q.question_id)">
-            <div
-              style="
-                margin-top: 20px;
-                padding-top: 20px;
-                border-top: #ededed 1px dashed;
-              "
-            >
+        </template>
+        <div
+          style="
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: #ededed 1px solid;
+          "
+          @click="onCardClick(q.question_id)"
+        >
+          <div v-if="q.question_type == 0">
+            <div v-katex>{{ q.stem }}</div>
+            <div v-if="clickedQuestionIds.has(q.question_id)">
               <div
-                v-for="(sub_question, index) in JSON.parse(q.sub_questions)"
-                :key="sub_question.question_id"
+                style="
+                  margin-top: 20px;
+                  padding-top: 20px;
+                  border-top: #ededed 1px dashed;
+                "
               >
-                ({{ index + 1 }})
-                <div v-katex>答案：{{ sub_question.question_answer }}</div>
-                <span class="stem-container" v-katex>{{
-                  sub_question.question_explanation
-                }}</span>
+                <div>
+                  答案：
+                  <span v-katex>{{ q.question_answer }}</span>
+                </div>
+                <div v-katex>{{ q.question_explanation }}</div>
+              </div>
+            </div>
+          </div>
+          <div v-else>
+            <div class="stem-container" v-katex>
+              {{ q.composite_question_stem }}
+            </div>
+            <div
+              v-for="(sub_question, index) in JSON.parse(q.sub_questions)"
+              :key="sub_question.question_id"
+            >
+              ({{ index + 1 }})
+              <span class="stem-container" v-katex>{{
+                sub_question.stem
+              }}</span>
+            </div>
+            <div v-if="clickedQuestionIds.has(q.question_id)">
+              <div
+                style="
+                  margin-top: 20px;
+                  padding-top: 20px;
+                  border-top: #ededed 1px dashed;
+                "
+              >
+                <div
+                  v-for="(sub_question, index) in JSON.parse(q.sub_questions)"
+                  :key="sub_question.question_id"
+                >
+                  ({{ index + 1 }})
+                  <div v-katex>答案：{{ sub_question.question_answer }}</div>
+                  <span class="stem-container" v-katex>{{
+                    sub_question.question_explanation
+                  }}</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-      <div class="actions">
-        <div class="action">纠错</div>
-        <div class="action">详情</div>
-        <div class="action">收藏</div>
-        <a-button class="add-question-bucket"> 加入试题篮 </a-button>
-      </div>
-    </a-card>
-  </a-col>
+        <div class="actions">
+          <div class="action">纠错</div>
+          <div class="action">详情</div>
+          <!--          <div class="action">收藏</div>-->
+          <a-button
+            class="add-question-bucket"
+            @click="addToBasket"
+            v-if="showAddToBasket"
+          >
+            加入试题篮
+          </a-button>
+        </div>
+      </a-card>
+    </a-col>
+  </div>
+  <!--  <BasketButton :count="basketCount" />-->
 </template>
 
 <script setup lang="ts">
 import { ref, defineProps, toRefs } from "vue";
+import BasketButton from "@/components/BasketButton.vue";
 const clickedQuestionIds = ref(new Set());
 const props = defineProps<{
+  showAddToBasket: {
+    type: boolean;
+    default: true; // 默认显示按钮
+  };
   allQuestions: any[];
   loading: boolean;
 }>();
+
+const basketCount = ref(0);
+const addToBasket = () => {
+  basketCount.value++;
+};
 
 let { allQuestions, loading } = toRefs(props);
 
@@ -122,6 +144,9 @@ const onCardClick = (id: any) => {
 };
 </script>
 <style scoped>
+.question-card {
+  width: 1000px;
+}
 .vertical-line {
   height: 10px;
   margin-left: 10px;

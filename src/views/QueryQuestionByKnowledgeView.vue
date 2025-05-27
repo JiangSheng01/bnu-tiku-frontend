@@ -1,7 +1,7 @@
 <template>
   <div class="all-content">
     <a-breadcrumb :style="{ margin: '16px 0', marginLeft: '20px' }">
-      <a-breadcrumb-item>BNU智慧题库</a-breadcrumb-item>
+      <a-breadcrumb-item>智慧题库</a-breadcrumb-item>
       <a-breadcrumb-item>知识点选题</a-breadcrumb-item>
     </a-breadcrumb>
     <div class="knowledge-content">
@@ -10,13 +10,20 @@
           <KnowledgePointTree @send="receiveData" />
         </a-col>
         <a-col style="padding-left: 32px; width: 1000px">
+          <a-row
+            ><div>
+              共计 <span style="color: #2877ff">{{ total }}</span> 条数据
+            </div></a-row
+          >
+          <a-row>
+            <QuestionFilter />
+          </a-row>
           <a-row :gutter="[12, 12]">
-            <a-col :span="24"
-              ><div>
-                共计 <span style="color: #2877ff">{{ total }}</span> 条数据
-              </div></a-col
-            >
-            <QuestionCard :all-questions="allQuestions" :loading="loading" />
+            <QuestionCard
+              :all-questions="allQuestions"
+              :loading="loading"
+              :show-add-to-basket="true"
+            />
           </a-row>
           <a-col
             style="
@@ -45,12 +52,17 @@ import { onMounted, ref } from "vue";
 import axios from "axios";
 import QuestionCard from "@/components/QuestionCard.vue";
 import { getQuestionsByKp } from "@/api/question";
+import QuestionFilter from "@/components/QuestionFilter.vue";
+import BasketButton from "@/components/BasketButton.vue";
 const allQuestions = ref([]);
 const currentPageNumber = ref<number>(1);
 const currentPageSize = ref<number>(10);
 const selectedKp = ref("beforeMount");
 const total = ref(0);
 const loading = ref(true);
+
+// 模拟“加入试题篮”操作
+
 onMounted(() => {
   const res = getQuestionsByKp("beforeMount", "1", "10")
     .then((res) => {
