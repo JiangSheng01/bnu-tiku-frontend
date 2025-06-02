@@ -9,21 +9,15 @@ export default {
 function renderKatex(el: HTMLElement) {
   let text = el.innerText;
 
-  // 先替换 $$...$$ 块级公式
+  // 替换所有$$...$$块为渲染公式，公式内容先去除所有html标签
   text = text.replace(/\$\$(.+?)\$\$/gs, (_, math) => {
-    return `${katex.renderToString(math, {
+    // 去掉公式内容中的HTML标签
+    const cleanMath = math.replace(/<[^>]+>/g, "");
+    return katex.renderToString(cleanMath, {
       throwOnError: false,
       output: "mathml",
-    })}`;
+    });
   });
-
-  // // 再替换 $...$ 行内公式
-  // text = text.replace(/\$(.+?)\$/g, (_, math) => {
-  //   return `<span class="inline-math">${katex.renderToString(math, {
-  //     throwOnError: false,
-  //     output: "mathml",
-  //   })}</span>`;
-  // });
 
   el.innerHTML = text;
 }

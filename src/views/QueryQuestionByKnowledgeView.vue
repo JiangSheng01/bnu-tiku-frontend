@@ -12,7 +12,7 @@
         <a-col style="padding-left: 32px; width: 1000px">
           <a-row
             ><div>
-              共计 <span style="color: #2877ff">{{ total }}</span> 条数据
+              共计 <span style="color: #2877ff">{{ total }}</span> 道试题
             </div></a-row
           >
           <a-row>

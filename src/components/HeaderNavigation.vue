@@ -1,12 +1,16 @@
 <template>
   <a-row type="flex" align="middle" style="flex-wrap: nowrap">
     <a-col
-      flex="250px"
+      flex="200px"
       style="font-size: 18px; display: flex; align-items: center"
     >
+      <!--      <router-link to="/"-->
+      <!--        ><img src="../assets/hsaBNU.png" width="40px" />-->
+      <!--        北京师大附中智慧题库</router-link-->
+      <!--      >-->
       <router-link to="/"
-        ><img src="../assets/hsaBNU.png" width="40px" />
-        北京师大附中智慧题库</router-link
+        ><img src="../assets/bnu.png" width="40px" style="margin-right: 5px" />
+        北师大智慧题库</router-link
       >
     </a-col>
 
@@ -159,6 +163,7 @@ function onSearchQuestion() {
     path: "/search/question/by/keyword",
     query: { kw: keyword.value.trim() },
   });
+  keyword.value = "";
 }
 const logout = () => {
   userStore.logout();

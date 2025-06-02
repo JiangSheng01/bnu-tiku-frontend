@@ -4,14 +4,15 @@
       <a-input-search
         v-model:value="searchBoxText"
         placeholder="搜索知识点"
-        style="width: 260px"
+        style="width: 260px; box-shadow: none"
         @search="onSearch"
+        allowClear
       >
-        <template #suffix v-if="!notSearchKp">
-          <a-tooltip>
-            <CloseCircleOutlined @click="onClikedClosedSearchKp" />
-          </a-tooltip>
-        </template>
+        <!--        <template #suffix v-if="!notSearchKp">-->
+        <!--          <a-tooltip>-->
+        <!--            <CloseCircleOutlined @click="onClikedClosedSearchKp" />-->
+        <!--          </a-tooltip>-->
+        <!--        </template>-->
       </a-input-search>
     </div>
     <div class="tree-scroll-container">
@@ -68,6 +69,7 @@ import treeData from "@/Data/TreeData";
 import axios, { CancelTokenSource } from "axios";
 import { defineEmits } from "vue";
 import { getQuestionsByKp } from "@/api/question";
+import { getKp } from "@/api/knowledge";
 let searchBoxText = ref("");
 let selectedKeys = ref([]);
 let searchResult = ref();
@@ -96,11 +98,7 @@ const onSelect = async (selectedKeys: any, info: any) => {
   }
   const kpName = info.node.title;
   try {
-    const res = await axios.get(
-      `http://localhost:8080/api/question/search/kp/${encodeURIComponent(
-        kpName
-      )}/${encodeURIComponent(1)}/${encodeURIComponent(10)}`
-    );
+    const res = await getQuestionsByKp(kpName, "1", "10");
     console.log(`📘 查询知识点「${kpName}」返回结果:`, res.data);
     emit("send", { resultData: res.data, selectedKey: kpName, loading: false });
   } catch (err) {
@@ -125,12 +123,7 @@ const onSearch = async (q: any) => {
   cancelTokenSource = axios.CancelToken.source();
 
   try {
-    const res = await axios.get(
-      `http://localhost:8080/api/kp/search/${encodeURIComponent(q)}`,
-      {
-        cancelToken: cancelTokenSource.token,
-      }
-    );
+    const res = await getKp(q);
 
     searchResult.value = res.data;
   } catch (error) {
@@ -142,7 +135,7 @@ const onSearch = async (q: any) => {
   }
 };
 
-const debouncedFetch = debounce(onSearch, 1000);
+const debouncedFetch = debounce(onSearch, 300);
 
 watch(searchBoxText, (newSearchText: string) => {
   if (newSearchText == "") {
