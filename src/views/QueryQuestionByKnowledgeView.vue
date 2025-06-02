@@ -16,7 +16,7 @@
             </div></a-row
           >
           <a-row>
-            <QuestionFilter />
+            <QuestionFilter @update-filter="receiveLabel" />
           </a-row>
           <a-row :gutter="[12, 12]">
             <QuestionCard
@@ -51,13 +51,27 @@ import { onMounted, ref } from "vue";
 
 import axios from "axios";
 import QuestionCard from "@/components/QuestionCard.vue";
-import { getQuestionsByKp } from "@/api/question";
+import {
+  getQuestionByCombination,
+  getQuestionsByKp,
+  QueryParams,
+} from "@/api/question";
 import QuestionFilter from "@/components/QuestionFilter.vue";
 import BasketButton from "@/components/BasketButton.vue";
+import { message } from "ant-design-vue";
 const allQuestions = ref([]);
 const currentPageNumber = ref<number>(1);
 const currentPageSize = ref<number>(10);
 const selectedKp = ref("beforeMount");
+const combinationLabel = ref<QueryParams>({
+  knowledgePointName: "",
+  keyword: "",
+  difficulty: "all",
+  grade: "all",
+  simpleQuestionType: -1,
+  pageNumber: 0,
+  pageSize: 10,
+});
 const total = ref(0);
 const loading = ref(true);
 
@@ -81,6 +95,24 @@ const receiveData = (data: any) => {
     total.value = data.resultData.totalCount;
   }
   loading.value = data.loading;
+};
+
+const receiveLabel = async (data: any) => {
+  loading.value = true;
+  combinationLabel.value.knowledgePointName = selectedKp.value;
+  combinationLabel.value.gradeId = data.selected.grade;
+  combinationLabel.value.difficulty = data.selected.difficulty;
+  combinationLabel.value.simpleQuestionType = data.selected.type;
+
+  console.log(combinationLabel.value);
+
+  const res = await getQuestionByCombination(combinationLabel.value);
+
+  allQuestions.value = res.data.questions;
+  total.value = res.data.totalCount;
+  loading.value = false;
+  // alert(combinationLabel.value.grade);
+  // message.success("**********");
 };
 
 const onChange = async (pageNumber: number) => {

@@ -22,8 +22,10 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { reactive } from "vue";
+
+const emits = defineEmits(["updateFilter"]);
 
 // 可传入 props 使其可复用
 const filterOptions = {
@@ -33,7 +35,7 @@ const filterOptions = {
   },
   type: {
     label: "题型",
-    options: ["全部", "单选题", "多选题", "填空题", "解答题", "判断题"],
+    options: ["全部", "单选题", "多选题", "填空题", "简答题", "判断题"],
   },
   difficulty: {
     label: "难度",
@@ -52,6 +54,66 @@ const selectItem = (groupKey, item) => {
   selected[groupKey] = item;
   // emit 可选：向父组件发出更新事件
   // emit("update:filter", { ...selected })
+  const newSelected = {
+    grade: gradeToId(selected.grade),
+    type: questionTypeToId(selected.type),
+    difficulty: transferDifficulty(selected.difficulty),
+  };
+  // console.log(newSelected);
+  emits("updateFilter", {
+    selected: newSelected,
+  });
+};
+
+const gradeToId = (gradeName) => {
+  switch (gradeName) {
+    case "七上":
+      return 1;
+    case "七下":
+      return 2;
+    case "八上":
+      return 3;
+    case "八下":
+      return 4;
+    case "九上":
+      return 5;
+    case "九下":
+      return 6;
+    case "全部":
+      return -1;
+  }
+};
+const questionTypeToId = (typeName) => {
+  switch (typeName) {
+    case "单选题":
+      return 0;
+    case "多选题":
+      return 1;
+    case "填空题":
+      return 2;
+    case "简答题":
+      return 3;
+    case "判断题":
+      return 4;
+    case "全部":
+      return -1;
+  }
+};
+const transferDifficulty = (difficultyName) => {
+  switch (difficultyName) {
+    case "容易":
+      return "easy";
+    case "较易":
+      return "simple";
+    case "适中":
+      return "medium";
+    case "较难":
+      return "relatively-difficult";
+    case "困难":
+      return "difficult";
+    case "全部":
+      return "all";
+  }
 };
 </script>
 

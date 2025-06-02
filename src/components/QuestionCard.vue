@@ -31,8 +31,8 @@
               </div>
               <div class="vertical-line"></div>
               <div class="question-tag">
-                <div v-if="q.difficulty < 0.5">困难</div>
-                <div v-else-if="q.difficulty < 0.65">较难</div>
+                <div v-if="q.difficulty < 0.45">困难</div>
+                <div v-else-if="q.difficulty < 0.6">较难</div>
                 <div v-else-if="q.difficulty < 0.8">适中</div>
                 <div v-else-if="q.difficulty < 0.9">较易</div>
                 <div v-else-if="q.difficulty < 1">容易</div>
