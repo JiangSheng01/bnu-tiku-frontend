@@ -23,6 +23,7 @@
           v-model:selectedKeys="selectedKeys"
           v-model:expanded-keys="expandedKeys"
           @select="onSelect"
+          show-line
         >
           <template #switcherIcon="{ expanded }">
             <component :is="expanded ? DownOutlined : RightOutlined" />
@@ -32,6 +33,9 @@
           </template>
           <template #meh>
             <smile-outlined />
+          </template>
+          <template #carryOut="{ selected }">
+            <component :is="selected ? CarryOutFilled : CarryOutOutlined" />
           </template>
         </a-tree>
       </div>
@@ -61,7 +65,8 @@ import {
   DownOutlined,
   SmileOutlined,
   RightOutlined,
-  CloseCircleOutlined,
+  CarryOutOutlined,
+  CarryOutFilled,
 } from "@ant-design/icons-vue";
 import { ref, watch, watchEffect } from "vue";
 import { debounce } from "lodash";
@@ -144,10 +149,10 @@ watch(searchBoxText, (newSearchText: string) => {
   debouncedFetch(newSearchText);
 });
 
-const onClikedClosedSearchKp = () => {
-  searchBoxText.value = "";
-  notSearchKp.value = true;
-};
+// const onClikedClosedSearchKp = () => {
+//   searchBoxText.value = "";
+//   notSearchKp.value = true;
+// };
 
 const onSearchQuestion = async (name: string) => {
   emit("send", { resultData: null, selectedKey: null, loading: true });
@@ -181,7 +186,7 @@ const onSearchQuestion = async (name: string) => {
   height: 770px;
   width: 300px;
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: auto;
   border-radius: 6px;
   padding-top: 10px;
   padding-left: 10px;

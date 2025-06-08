@@ -14,15 +14,21 @@
     "ant-design-x-vue": "^1.2.1",
     "axios": "^1.8.4",
     "core-js": "^3.8.3",
+    "diff-match-patch": "^1.0.5",
     "lodash": "^4.17.21",
     "markdown-it": "^14.1.0",
     "markdown-it-katex": "^2.0.3",
     "markdown-it-latex": "^0.2.0",
     "pinia": "^3.0.2",
+    "quill": "^2.0.3",
+    "quill-delta": "^5.1.0",
     "vue": "^3.2.13",
-    "vue-router": "^4.0.3"
+    "vue-diff-match-patch": "^0.0.1",
+    "vue-router": "^4.0.3",
+    "vue3-quill": "^0.3.1"
   },
   "devDependencies": {
+    "@types/diff-match-patch": "^1.0.36",
     "@types/katex": "^0.16.7",
     "@types/lodash": "^4.17.16",
     "@types/markdown-it": "^14.1.2",

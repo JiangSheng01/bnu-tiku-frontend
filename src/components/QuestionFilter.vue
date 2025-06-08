@@ -31,7 +31,15 @@ const emits = defineEmits(["updateFilter"]);
 const filterOptions = {
   grade: {
     label: "年级",
-    options: ["全部", "七上", "七下", "八上", "八下", "九上", "九下"],
+    options: [
+      "全部",
+      "七年级上",
+      "七年级下",
+      "八年级上",
+      "八年级下",
+      "九年级上",
+      "九年级下",
+    ],
   },
   type: {
     label: "题型",
@@ -44,13 +52,13 @@ const filterOptions = {
 };
 
 // 选中状态
-const selected = reactive({
+const selected = reactive<Record<string, any>>({
   grade: "全部",
   type: "全部",
   difficulty: "全部",
 });
 
-const selectItem = (groupKey, item) => {
+const selectItem = (groupKey: any, item: any) => {
   selected[groupKey] = item;
   // emit 可选：向父组件发出更新事件
   // emit("update:filter", { ...selected })
@@ -65,25 +73,25 @@ const selectItem = (groupKey, item) => {
   });
 };
 
-const gradeToId = (gradeName) => {
+const gradeToId = (gradeName: any) => {
   switch (gradeName) {
-    case "七上":
+    case "七年级上":
       return 1;
-    case "七下":
+    case "七年级下":
       return 2;
-    case "八上":
+    case "八年级上":
       return 3;
-    case "八下":
+    case "八年级下":
       return 4;
-    case "九上":
+    case "九年级上":
       return 5;
-    case "九下":
+    case "九年级下":
       return 6;
     case "全部":
       return -1;
   }
 };
-const questionTypeToId = (typeName) => {
+const questionTypeToId = (typeName: any) => {
   switch (typeName) {
     case "单选题":
       return 0;
@@ -99,7 +107,7 @@ const questionTypeToId = (typeName) => {
       return -1;
   }
 };
-const transferDifficulty = (difficultyName) => {
+const transferDifficulty = (difficultyName: any) => {
   switch (difficultyName) {
     case "容易":
       return "easy";

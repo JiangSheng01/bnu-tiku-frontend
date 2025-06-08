@@ -14,7 +14,7 @@
           </div></a-row
         >
         <a-row>
-          <QuestionFilter />
+          <QuestionFilter @update-filter="receiveLabel" />
         </a-row>
         <a-row :gutter="[12, 12]">
           <QuestionCard
@@ -48,7 +48,11 @@ import QuestionCard from "@/components/QuestionCard.vue";
 import { useRoute } from "vue-router";
 import { watch } from "vue";
 import { ref } from "vue";
-import { getQuestionsByKeyword } from "@/api/question";
+import {
+  getQuestionByCombination,
+  getQuestionsByKeyword,
+  QueryParams,
+} from "@/api/question";
 import QuestionFilter from "@/components/QuestionFilter.vue";
 const route = useRoute();
 const keyword = ref(route.query.kw || "");
@@ -56,15 +60,23 @@ const allQuestions = ref([]);
 const total = ref(0);
 let currentPageNumber = ref(1);
 let currentPageSize = ref(10);
+const combinationLabel = ref<QueryParams>({
+  knowledgePointName: "",
+  keyword: "",
+  difficulty: "all",
+  gradeId: -1,
+  simpleQuestionType: -1,
+  pageNumber: 1,
+  pageSize: 10,
+});
 
 const searchQuestionsByKeyword = async () => {
   const searchParam = keyword.value.toString().trim();
   try {
-    const res = await getQuestionsByKeyword(
-      searchParam,
-      currentPageNumber.value.toString(),
-      currentPageSize.value.toString()
-    );
+    combinationLabel.value.keyword = searchParam;
+    combinationLabel.value.pageNumber = currentPageNumber.value;
+    combinationLabel.value.pageSize = currentPageSize.value;
+    const res = await getQuestionByCombination(combinationLabel.value);
     allQuestions.value = res.data.questions;
     total.value = res.data.totalCount;
     console.log(`📘 查询关键词「${searchParam}」返回结果:`, res.data);
@@ -87,6 +99,22 @@ watch(
     searchQuestionsByKeyword();
   }
 );
+const receiveLabel = async (data: any) => {
+  combinationLabel.value.keyword = keyword.value.toString().trim();
+  combinationLabel.value.gradeId = data.selected.grade;
+  combinationLabel.value.difficulty = data.selected.difficulty;
+  combinationLabel.value.simpleQuestionType = data.selected.type;
+  combinationLabel.value.pageNumber = currentPageNumber.value;
+  combinationLabel.value.pageSize = currentPageSize.value;
+  console.log(combinationLabel.value);
+
+  const res = await getQuestionByCombination(combinationLabel.value);
+
+  allQuestions.value = res.data.questions;
+  total.value = res.data.totalCount;
+  // alert(combinationLabel.value.grade);
+  // message.success("**********");
+};
 </script>
 
 <style scoped>

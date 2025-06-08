@@ -11,10 +11,21 @@
         </a-col>
         <a-col style="padding-left: 32px; width: 1000px">
           <a-row
-            ><div>
+            ><a-col flex="120px">
               共计 <span style="color: #2877ff">{{ total }}</span> 道试题
-            </div></a-row
-          >
+            </a-col>
+            <a-col flex="1" />
+            <a-col flex="1">
+              <div style="text-align: right" v-if="selectedKp != 'beforeMount'">
+                正在搜索的知识点：<span style="color: #2877ff">{{
+                  selectedKp
+                }}</span>
+              </div>
+              <div style="text-align: right" v-else>
+                正在搜索的知识点：<span style="color: #2877ff"> 全部 </span>
+              </div></a-col
+            >
+          </a-row>
           <a-row>
             <QuestionFilter @update-filter="receiveLabel" />
           </a-row>
@@ -67,9 +78,9 @@ const combinationLabel = ref<QueryParams>({
   knowledgePointName: "",
   keyword: "",
   difficulty: "all",
-  grade: "all",
+  gradeId: -1,
   simpleQuestionType: -1,
-  pageNumber: 0,
+  pageNumber: 1,
   pageSize: 10,
 });
 const total = ref(0);
@@ -78,7 +89,7 @@ const loading = ref(true);
 // 模拟“加入试题篮”操作
 
 onMounted(() => {
-  const res = getQuestionsByKp("beforeMount", "1", "10")
+  const res = getQuestionByCombination(combinationLabel.value)
     .then((res) => {
       allQuestions.value = res.data.questions;
       total.value = res.data.totalCount;
@@ -103,7 +114,8 @@ const receiveLabel = async (data: any) => {
   combinationLabel.value.gradeId = data.selected.grade;
   combinationLabel.value.difficulty = data.selected.difficulty;
   combinationLabel.value.simpleQuestionType = data.selected.type;
-
+  combinationLabel.value.pageNumber = currentPageNumber.value;
+  combinationLabel.value.pageSize = currentPageSize.value;
   console.log(combinationLabel.value);
 
   const res = await getQuestionByCombination(combinationLabel.value);
@@ -115,13 +127,24 @@ const receiveLabel = async (data: any) => {
   // message.success("**********");
 };
 
+// const onChange = async (pageNumber: number) => {
+//   loading.value = true;
+//   const res = await getQuestionsByKp(
+//     selectedKp.value,
+//     pageNumber.toString(),
+//     currentPageSize.value.toString()
+//   );
+//   allQuestions.value = res.data.questions;
+//   total.value = res.data.totalCount;
+//   loading.value = false;
+//   console.log(allQuestions.value);
+// };
+
 const onChange = async (pageNumber: number) => {
   loading.value = true;
-  const res = await getQuestionsByKp(
-    selectedKp.value,
-    pageNumber.toString(),
-    currentPageSize.value.toString()
-  );
+  combinationLabel.value.pageNumber = pageNumber;
+  combinationLabel.value.pageSize = currentPageSize.value;
+  const res = await getQuestionByCombination(combinationLabel.value);
   allQuestions.value = res.data.questions;
   total.value = res.data.totalCount;
   loading.value = false;

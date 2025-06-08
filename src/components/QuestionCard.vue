@@ -97,7 +97,7 @@
         <div class="question-divider"></div>
         <div class="actions">
           <div class="action" @click="showCorrect(i)">纠错</div>
-          <div class="action">详情</div>
+          <div class="action" @click="onCardClick(q.question_id)">详情</div>
           <!--          <div class="action">收藏</div>-->
           <a-button
             type="link"
@@ -128,7 +128,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, defineProps, toRefs, watchEffect, reactive, computed } from "vue";
+import { ref, defineProps, toRefs } from "vue";
 import { useQuestionBasketStore } from "@/stores/questionBasket";
 import QuestionCorrectView from "@/views/QuestionCorrectView.vue";
 import { message } from "ant-design-vue";

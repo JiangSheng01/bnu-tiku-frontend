@@ -7,7 +7,17 @@
       <a-breadcrumb-item>首页</a-breadcrumb-item> </a-breadcrumb
     ><br />
   </div>
-  <div class="home-content">欢迎进入BNU智慧题库</div>
+  <div class="home-content">
+    <!--    <img-->
+    <!--      src="../assets/front-page-img.png"-->
+    <!--      alt=""-->
+    <!--      width="1500px"-->
+    <!--      height="850px"-->
+    <!--      style="border-radius: 14px"-->
+    <!--      draggable="false"-->
+    <!--    />-->
+    欢迎进入智慧题库
+  </div>
 </template>
 
 <style scoped>
@@ -15,7 +25,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 810px;
+  height: 80vh;
   font-size: 25px;
 }
 </style>

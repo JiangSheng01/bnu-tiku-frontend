@@ -1200,7 +1200,7 @@ watch(
 .ant-cascader-menu-item-content {
   display: flex;
   align-items: center;
-  font-size: 16px;
+  font-size: 1px;
   height: 40px;
 }
 

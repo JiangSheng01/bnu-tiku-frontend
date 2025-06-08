@@ -1,20 +1,20 @@
 <template>
   <a-row type="flex" align="middle" style="flex-wrap: nowrap">
     <a-col
-      flex="200px"
+      flex="240px"
       style="font-size: 18px; display: flex; align-items: center"
     >
-      <!--      <router-link to="/"-->
-      <!--        ><img src="../assets/hsaBNU.png" width="40px" />-->
-      <!--        北京师大附中智慧题库</router-link-->
-      <!--      >-->
       <router-link to="/"
-        ><img src="../assets/bnu.png" width="40px" style="margin-right: 5px" />
-        北师大智慧题库</router-link
+        ><img src="../assets/hsaBNU.png" width="40px" />
+        北京师大附中智慧题库</router-link
       >
+      <!--      <router-link to="/"-->
+      <!--        ><img src="../assets/bnu.png" width="40px" style="margin-right: 5px" />-->
+      <!--        北师大智慧题库</router-link-->
+      <!--      >-->
     </a-col>
 
-    <a-col flex="400px" style="display: flex; align-items: center">
+    <a-col flex="100px" style="display: flex; align-items: center">
       <a-menu
         mode="horizontal"
         v-model:selectedKeys="selectedLeftKeys"
@@ -51,7 +51,7 @@
     </a-col>
 
     <a-col
-      flex="1"
+      flex="1 1 auto"
       style="
         display: flex;
         justify-content: center;
@@ -64,22 +64,22 @@
         placeholder="输入关键词搜题"
         @search="onSearchQuestion"
         size="large"
-        style="width: 400px"
+        style="width: 35%; min-width: 260px"
       >
         <template #enterButton>搜索</template>
       </a-input-search>
     </a-col>
 
-    <a-col flex="400px">
+    <a-col flex="0 0 160px">
       <a-row>
         <!--        <a-col style="width: 240px">-->
         <!--          <div style="width: 100%" class="custom-text">-->
-        <!--            &lt;!&ndash;            <a @click="chatShow" style="margin-right: 12px">✨ AI搜题</a>&ndash;&gt;-->
-        <!--            <a style="margin-right: 12px">✨ AI搜题</a>-->
+        <!--            <a @click="chatShow" style="margin-right: 12px">✨ AI搜题</a>-->
+        <!--            &lt;!&ndash;            <a style="margin-right: 12px">✨ AI搜题</a>&ndash;&gt;-->
         <!--          </div>-->
         <!--          <ChatModal v-model:visible="showChat" />-->
         <!--        </a-col>-->
-        <a-col style="width: 400px">
+        <a-col style="width: 100%">
           <div style="width: 100%" class="custom-text">
             <shopping-two-tone style="margin-right: 6px" />
             <router-link to="/question/bucket">试题篮</router-link>

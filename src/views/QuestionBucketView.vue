@@ -1,4 +1,10 @@
 <template>
+  <div class="upload-view">
+    <a-breadcrumb :style="{ margin: '16px 0', marginLeft: '20px' }">
+      <a-breadcrumb-item>智慧题库</a-breadcrumb-item>
+      <a-breadcrumb-item>试题篮</a-breadcrumb-item> </a-breadcrumb
+    ><br />
+  </div>
   <div class="question-bucket">
     <QuestionCard
       v-if="allQuestions.length > 0"
@@ -19,7 +25,8 @@
       <a-button
         class="download-word-button"
         type="primary"
-        @click="$emit('export', 'word')"
+        @click="exportAsWord"
+        :loading="downloading"
         >导出为 Word</a-button
       >
       <a-button
@@ -34,17 +41,45 @@
 
 <script setup lang="ts">
 import QuestionCard from "@/components/QuestionCard.vue";
-import { computed, ref, toRefs } from "vue";
+import { computed, ref, toRefs, watchEffect } from "vue";
 import { useQuestionBasketStore } from "@/stores/questionBasket";
 import { message } from "ant-design-vue";
+import { exportQuestionByIds } from "@/api/question";
 const maxCount = ref(20);
 const { questionBasket } = toRefs(useQuestionBasketStore());
+const downloading = ref(false);
 defineEmits(["export"]);
 const allQuestions = ref(Array.from(questionBasket.value.values()));
 const clearAll = () => {
   questionBasket.value.clear();
   allQuestions.value = [];
   message.success("试题篮已清空");
+};
+
+const exportAsWord = async () => {
+  downloading.value = true;
+  const allQuestionIds = allQuestions.value.map(
+    (question) => question.question_id
+  );
+  exportQuestionByIds(allQuestionIds, "docx")
+    .then((res) => {
+      const filename = `题库导出.doc`;
+      const blob = new Blob([res.data]);
+      const url = window.URL.createObjectURL(blob);
+
+      // 模拟 a 标签点击下载
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    })
+    .finally(() => {
+      clearAll();
+      downloading.value = false;
+    });
 };
 </script>
 
@@ -118,7 +153,7 @@ const clearAll = () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 810px;
   font-size: 25px;
+  height: 50vh;
 }
 </style>
