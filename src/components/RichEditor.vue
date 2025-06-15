@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="rich-editor-container">
     <!-- 编辑框，用内容可控的 input 或 contenteditable 实现 -->
     <div
       ref="editor"
@@ -10,18 +10,27 @@
       @compositionend="onCompositionEnd"
       @keydown="onKeydown"
       style="min-height: 120px; border: 1px solid #ccc; padding: 10px"
+      @blur="computeFinalText"
     ></div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { defineProps, onMounted, ref, toRefs, watchEffect } from "vue";
+import {
+  computed,
+  defineProps,
+  onMounted,
+  ref,
+  toRefs,
+  watchEffect,
+} from "vue";
 import DiffMatchPatch from "diff-match-patch";
 const props = defineProps<{
   text: string;
 }>();
 let index = 0;
 let { text } = toRefs(props);
+// text.value = "1";
 const history: string[] = [text.value];
 // console.log(origin.value.text);
 // watchEffect(() => {
@@ -178,4 +187,25 @@ function restoreTags(diffHtml: string, currentHtml: string) {
 
   return restored;
 }
+
+const emit = defineEmits(["sendCorrections"]);
+// text.value = "123";
+function computeFinalText() {
+  // text.value = "123";
+  // alert(text.value);
+  // alert(editor.value!.innerHTML);
+  // alert(text.value == editor.value!.innerHTML);
+  emit("sendCorrections", {
+    correction: editor
+      .value!.innerHTML.replace(/<span\b[^>]*>/gi, "")
+      .replace(/<\/span>/gi, ""),
+  });
+}
 </script>
+
+<style scoped>
+.rich-editor-container {
+  max-height: 250px;
+  overflow: auto;
+}
+</style>

@@ -5,7 +5,7 @@
       style="font-size: 18px; display: flex; align-items: center"
     >
       <router-link to="/"
-        ><img src="../assets/hsaBNU.png" width="40px" />
+        ><img src="../assets/hsaBNU.png" width="40px" draggable="false" />
         北京师大附中智慧题库</router-link
       >
       <!--      <router-link to="/"-->
@@ -22,17 +22,17 @@
         :style="{ lineHeight: '63px', marginLeft: '10px' }"
       >
         <a-menu-item key="1" class="custom-menu-item">
-          <template #icon>
-            <HomeTwoTone style="font-size: 16px; margin-right: 1px" />
-          </template>
+          <!--          <template #icon>-->
+          <!--            <HomeTwoTone style="font-size: 16px; margin-right: 1px" />-->
+          <!--          </template>-->
           <span class="custom-text"
             ><router-link to="/">首页</router-link></span
           >
         </a-menu-item>
         <a-menu-item key="2" class="custom-menu-item">
-          <template #icon>
-            <ContainerTwoTone style="font-size: 16px; margin-right: 1px" />
-          </template>
+          <!--          <template #icon>-->
+          <!--            <ContainerTwoTone style="font-size: 16px; margin-right: 1px" />-->
+          <!--          </template>-->
           <span class="custom-text"
             ><router-link to="/search/question/by/kp"
               >知识点选题</router-link
@@ -72,16 +72,16 @@
 
     <a-col flex="0 0 160px">
       <a-row>
-        <!--        <a-col style="width: 240px">-->
-        <!--          <div style="width: 100%" class="custom-text">-->
-        <!--            <a @click="chatShow" style="margin-right: 12px">✨ AI搜题</a>-->
-        <!--            &lt;!&ndash;            <a style="margin-right: 12px">✨ AI搜题</a>&ndash;&gt;-->
-        <!--          </div>-->
-        <!--          <ChatModal v-model:visible="showChat" />-->
-        <!--        </a-col>-->
-        <a-col style="width: 100%">
+        <a-col style="width: 60%">
           <div style="width: 100%" class="custom-text">
-            <shopping-two-tone style="margin-right: 6px" />
+            <a @click="chatShow" style="margin-right: 12px">✨ AI搜题</a>
+            <!--            <a style="margin-right: 12px">✨ AI搜题</a>-->
+          </div>
+          <ChatModal v-model:visible="showChat" />
+        </a-col>
+        <a-col style="width: 40%">
+          <div style="width: 100%" class="custom-text">
+            <!--            <shopping-two-tone style="margin-right: 6px" />-->
             <router-link to="/question/bucket">试题篮</router-link>
           </div>
         </a-col>
@@ -177,5 +177,17 @@ const logout = () => {
 .custom-text {
   text-align: right;
   font-size: 16px;
+}
+</style>
+
+<style>
+.ant-menu-light.ant-menu-horizontal > .ant-menu-item:hover::after,
+.ant-menu-light.ant-menu-horizontal > .ant-menu-submenu:hover::after,
+.ant-menu-light.ant-menu-horizontal > .ant-menu-item-active::after,
+.ant-menu-light.ant-menu-horizontal > .ant-menu-submenu-active::after,
+.ant-menu-light.ant-menu-horizontal > .ant-menu-item-open::after,
+.ant-menu-light.ant-menu-horizontal > .ant-menu-submenu-open::after {
+  border-bottom-width: 2px;
+  border-bottom-color: #1677ff;
 }
 </style>

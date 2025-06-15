@@ -19,13 +19,14 @@
             alt="logo"
             :style="styles['logo-img']"
           />
-          <span :style="styles['logo-span']">BNU TIKU NEO</span>
+          <!--          <span :style="styles['logo-span']">BNU TIKU NEO</span>-->
+          <span :style="styles['logo-span']">智慧题库助手</span>
         </div>
 
         <!-- 🌟 添加会话 -->
         <a-button type="link" :style="styles.addBtn" @click="onAddConversation">
           <PlusOutlined />
-          New Conversation
+          新聊天
         </a-button>
 
         <!-- 🌟 会话管理 -->
@@ -56,7 +57,8 @@
           "
         >
           <DeleteOutlined />
-          Clear Conversations
+          <!--          Clear Conversations-->
+          清除聊天
         </a-button>
 
         <a-button
@@ -71,7 +73,8 @@
           "
         >
           <FireOutlined />
-          Light Mode
+          <!--          Light Mode-->
+          深色模式
         </a-button>
       </div>
       <div :style="styles.chat">
@@ -119,6 +122,7 @@
                   :bordered="false"
                   size="large"
                   :display-render="displayRender"
+                  :popupClassName="'model-cascader'"
                 >
                   <template #suffixIcon>
                     <DownOutlined />
@@ -517,7 +521,8 @@ function renderTitle(icon: VNode, title: string) {
 const defaultConversationsItems = [
   {
     key: "0",
-    label: "What is Ant Design X?",
+    // label: "What is Ant Design X?",
+    label: "新会话",
     icon: h(MessageOutlined),
   },
 ];
@@ -525,23 +530,28 @@ const defaultConversationsItems = [
 const placeholderPromptsItems: PromptsProps["items"] = [
   {
     key: "1",
+    // label: renderTitle(
+    //   h(FireOutlined, { style: { color: "#FF4D4F" } }),
+    //   "Hot Topics"
+    // ),
     label: renderTitle(
       h(FireOutlined, { style: { color: "#FF4D4F" } }),
-      "Hot Topics"
+      "习题推荐"
     ),
-    description: "What are you interested in?",
+    // description: "What are you interested in?",
+    description: "精准推荐，助你高效突破",
     children: [
       {
         key: "1-1",
-        description: `What's new in X?`,
+        description: `练习推送`,
       },
       {
         key: "1-2",
-        description: `What's AGI?`,
+        description: `难点查漏补缺`,
       },
       {
         key: "1-3",
-        description: `Where is the doc?`,
+        description: `智能题目排序`,
       },
     ],
   },
@@ -549,24 +559,21 @@ const placeholderPromptsItems: PromptsProps["items"] = [
     key: "2",
     label: renderTitle(
       h(ReadOutlined, { style: { color: "#1890FF" } }),
-      "Design Guide"
+      "习题生成"
     ),
-    description: "How to design a good product?",
+    description: "智能生成，满足多样化需求",
     children: [
       {
         key: "2-1",
-        icon: h(HeartOutlined),
-        description: `Know the well`,
+        description: `一键生成练习题`,
       },
       {
         key: "2-2",
-        icon: h(SmileOutlined),
-        description: `Set the AI role`,
+        description: `按知识点自定义`,
       },
       {
         key: "2-3",
-        icon: h(CommentOutlined),
-        description: `Express the feeling`,
+        description: `风格多样可选`,
       },
     ],
   },
@@ -575,12 +582,14 @@ const placeholderPromptsItems: PromptsProps["items"] = [
 const senderPromptsItems: PromptsProps["items"] = [
   {
     key: "1",
-    description: "Hot Topics",
+    // description: "Hot Topics",
+    description: "助手功能",
     icon: h(FireOutlined, { style: { color: "#FF4D4F" } }),
   },
   {
     key: "2",
-    description: "Design Guide",
+    // description: "Design Guide",
+    description: "使用指南",
     icon: h(ReadOutlined, { style: { color: "#1890FF" } }),
   },
 ];
@@ -674,65 +683,65 @@ const [agent] = useXAgent({
     loading.value = true;
     onUpdate(" ");
     await sleep();
-    const stream = [
-      "欧拉公式是数学中一个非常著名且重要的公式，它将复数、指数函数和三角函数紧密联系在一起。欧拉公式的形式为：\n" +
-        "\n" +
-        "$$\n" +
-        "e^{i\\theta} = \\cos\\theta +i\\sin\\theta\n" +
-        "$$\n" +
-        "\n" +
-        "其中：\n" +
-        "- $e$ 是自然对数的底（约等于 2.71828），\n" +
-        "- $i$ 是虚数单位，满足 $i^2 =-1$，\n" +
-        "- $\\theta$是任意实数，通常表示角度（以弧度为单位）。\n" +
-        "\n" +
-        "### 欧拉公式的推导\n" +
-        "欧拉公式的推导基于泰勒级数展开。我们知道以下三个函数的泰勒展开式：\n" +
-        "1.指数函数：$ e^x = 1+ x + \\frac{x^2}{2!}+ \\frac{x^3}{3!} + \\cdots $\n" +
-        "2. 正弦函数：$\\sinx = x -\\frac{x^3}{3!} + \\frac{x^5}{5!} -\\cdots$\n" +
-        "3. 余弦函数：$\\cos x = 1 - \\frac{x^2}{2!} +\\frac{x^4}{4!} - \\cdots$\n" +
-        "\n" +
-        "将 $e^{ix}$展开为泰勒级数：\n" +
-        "$$\n" +
-        "e^{ix} =1 + ix+ \\frac{(ix)^2}{2!} +\\frac{(ix)^3}{3!} + \\frac{(ix)^4}{4!} + \\cdots\n" +
-        "$$\n" +
-        "\n" +
-        "注意到 $(ix)^n$ 的性质：\n" +
-        "- 当 $n$ 是偶数时，$(ix)^n =(-1)^{n/2}x^n$（实数部分）。\n" +
-        "- 当 $n$ 是奇数时，$(ix)^n =(-1)^{(n-1)/2}ix^n$（虚数部分）。\n" +
-        "\n" +
-        "因此可以将 $e^{ix}$ 分成实部和虚部：\n" +
-        "$$\n" +
-        "e^{ix} = (1- \\frac{x^2}{2!} + \\frac{x^4}{4!}- \\cdots) + i(x- \\frac{x^3}{3!} + \\frac{x^5}{5!}- \\cdots)\n" +
-        "$$\n" +
-        "\n" +
-        "观察发现，实部正好是 $\\cosx$ 的泰勒展开式，虚部正好是$\\sin x$的泰勒展开式。因此我们得到：\n" +
-        "$$\n" +
-        "e^{ix}= \\cos x+ i\\sinx\n" +
-        "$$\n" +
-        "\n" +
-        "### 欧拉公式的应用\n" +
-        "1. **复数的极坐标表示**  \n" +
-        "  复数$z = a+ bi$可以写成极坐标形式：$z = re^{i\\theta}$，其中 $r = |z|$ 是模长，$\\theta =\\arg(z)$是辐角。\n" +
-        "\n" +
-        "2. **三角函数的关系**  \n" +
-        "  利用欧拉公式，可以推导出三角函数的恒等式。例如：\n" +
-        "  $$\n" +
-        "  \\cos\\theta = \\frac{e^{i\\theta} +e^{-i\\theta}}{2}, \\quad \\sin\\theta =\\frac{e^{i\\theta} - e^{-i\\theta}}{2i}\n" +
-        "  $$\n" +
-        "\n" +
-        "3. **特殊值**  \n" +
-        "  当$\\theta = \\pi$ 时，欧拉公式变为著名的 **欧拉恒等式**：\n" +
-        "  $$\n" +
-        "  e^{i\\pi}+ 1 =0\n" +
-        " $$\n" +
-        " 这个公式被认为是数学中最美丽的公式之一，因为它将五个重要的数学常数 $e,i, \\pi, 1,0$联系在了一起。\n" +
-        "\n" +
-        "4. **信号处理与傅里叶变换**  \n" +
-        " 欧拉公式在信号处理、傅里叶分析等领域有广泛应用。它使得正弦和余弦波可以用复指数形式表示，从而简化了计算。\n" +
-        "\n" +
-        "总结来说，欧拉公式不仅是数学中的瑰宝，还在物理、工程、计算机科学等领域有着深远的影响。",
-    ];
+    const stream = ["你好我是题库助手"];
+    //   "欧拉公式是数学中一个非常著名且重要的公式，它将复数、指数函数和三角函数紧密联系在一起。欧拉公式的形式为：\n" +
+    //     "\n" +
+    //     "$$\n" +
+    //     "e^{i\\theta} = \\cos\\theta +i\\sin\\theta\n" +
+    //     "$$\n" +
+    //     "\n" +
+    //     "其中：\n" +
+    //     "- $e$ 是自然对数的底（约等于 2.71828），\n" +
+    //     "- $i$ 是虚数单位，满足 $i^2 =-1$，\n" +
+    //     "- $\\theta$是任意实数，通常表示角度（以弧度为单位）。\n" +
+    //     "\n" +
+    //     "### 欧拉公式的推导\n" +
+    //     "欧拉公式的推导基于泰勒级数展开。我们知道以下三个函数的泰勒展开式：\n" +
+    //     "1.指数函数：$ e^x = 1+ x + \\frac{x^2}{2!}+ \\frac{x^3}{3!} + \\cdots $\n" +
+    //     "2. 正弦函数：$\\sinx = x -\\frac{x^3}{3!} + \\frac{x^5}{5!} -\\cdots$\n" +
+    //     "3. 余弦函数：$\\cos x = 1 - \\frac{x^2}{2!} +\\frac{x^4}{4!} - \\cdots$\n" +
+    //     "\n" +
+    //     "将 $e^{ix}$展开为泰勒级数：\n" +
+    //     "$$\n" +
+    //     "e^{ix} =1 + ix+ \\frac{(ix)^2}{2!} +\\frac{(ix)^3}{3!} + \\frac{(ix)^4}{4!} + \\cdots\n" +
+    //     "$$\n" +
+    //     "\n" +
+    //     "注意到 $(ix)^n$ 的性质：\n" +
+    //     "- 当 $n$ 是偶数时，$(ix)^n =(-1)^{n/2}x^n$（实数部分）。\n" +
+    //     "- 当 $n$ 是奇数时，$(ix)^n =(-1)^{(n-1)/2}ix^n$（虚数部分）。\n" +
+    //     "\n" +
+    //     "因此可以将 $e^{ix}$ 分成实部和虚部：\n" +
+    //     "$$\n" +
+    //     "e^{ix} = (1- \\frac{x^2}{2!} + \\frac{x^4}{4!}- \\cdots) + i(x- \\frac{x^3}{3!} + \\frac{x^5}{5!}- \\cdots)\n" +
+    //     "$$\n" +
+    //     "\n" +
+    //     "观察发现，实部正好是 $\\cosx$ 的泰勒展开式，虚部正好是$\\sin x$的泰勒展开式。因此我们得到：\n" +
+    //     "$$\n" +
+    //     "e^{ix}= \\cos x+ i\\sinx\n" +
+    //     "$$\n" +
+    //     "\n" +
+    //     "### 欧拉公式的应用\n" +
+    //     "1. **复数的极坐标表示**  \n" +
+    //     "  复数$z = a+ bi$可以写成极坐标形式：$z = re^{i\\theta}$，其中 $r = |z|$ 是模长，$\\theta =\\arg(z)$是辐角。\n" +
+    //     "\n" +
+    //     "2. **三角函数的关系**  \n" +
+    //     "  利用欧拉公式，可以推导出三角函数的恒等式。例如：\n" +
+    //     "  $$\n" +
+    //     "  \\cos\\theta = \\frac{e^{i\\theta} +e^{-i\\theta}}{2}, \\quad \\sin\\theta =\\frac{e^{i\\theta} - e^{-i\\theta}}{2i}\n" +
+    //     "  $$\n" +
+    //     "\n" +
+    //     "3. **特殊值**  \n" +
+    //     "  当$\\theta = \\pi$ 时，欧拉公式变为著名的 **欧拉恒等式**：\n" +
+    //     "  $$\n" +
+    //     "  e^{i\\pi}+ 1 =0\n" +
+    //     " $$\n" +
+    //     " 这个公式被认为是数学中最美丽的公式之一，因为它将五个重要的数学常数 $e,i, \\pi, 1,0$联系在了一起。\n" +
+    //     "\n" +
+    //     "4. **信号处理与傅里叶变换**  \n" +
+    //     " 欧拉公式在信号处理、傅里叶分析等领域有广泛应用。它使得正弦和余弦波可以用复指数形式表示，从而简化了计算。\n" +
+    //     "\n" +
+    //     "总结来说，欧拉公式不仅是数学中的瑰宝，还在物理、工程、计算机科学等领域有着深远的影响。",
+    // ];
     // 假设你通过 fetch/EventSource 拿到流式片段
     // const s =
     //   "万有引力公式是由艾萨克·牛顿提出的，用来描述任意两个具有质量的物体之间的引力作用。这个公式是经典力学的重要组成部分，广泛应用于天文学、物理学和工程学等领域。\n" +
@@ -951,7 +960,8 @@ function onAddConversation() {
     ...conversationsItems.value,
     {
       key: `${conversationsItems.value.length}`,
-      label: `New Conversation ${conversationsItems.value.length}`,
+      // label: `New Conversation ${conversationsItems.value.length}`,
+      label: `新会话 ${conversationsItems.value.length}`,
       icon: h(MessageOutlined),
     },
   ];
@@ -974,7 +984,7 @@ const placeholderNode = computed(() =>
       h(Welcome, {
         variant: "borderless",
         icon: "https://mdn.alipayobjects.com/huamei_iwk9zp/afts/img/A*s5sNRo5LjfQAAAAAAAAAAAAADgCCAQ/fmt.webp",
-        title: "Hello, I'm Neo",
+        title: "你好，我是题库助手",
         description: h(
           "div",
           {
@@ -983,18 +993,18 @@ const placeholderNode = computed(() =>
               marginBottom: "16px", // 底部留白
               color: "#555", // 更柔和的灰色
             },
-          },
-          [
-            h("div", {}, "An education QA Agent"),
-            h("div", {}, "Powered by BNU's Self-Developed AI Model"),
-            h(
-              "div",
-              {
-                style: { fontWeight: "bold", marginTop: "8px", color: "#222" },
-              },
-              "Awakening starts with a single question."
-            ),
-          ]
+          }
+          // [
+          //   h("div", {}, "An education QA Agent"),
+          //   h("div", {}, "Powered by BNU's Self-Developed AI Model"),
+          //   h(
+          //     "div",
+          //     {
+          //       style: { fontWeight: "bold", marginTop: "8px", color: "#222" },
+          //     },
+          //     "Awakening starts with a single question."
+          //   ),
+          // ]
         ),
         extra: h(Space, {}, [
           h(Button, { icon: h(ShareAltOutlined) }),
@@ -1002,7 +1012,8 @@ const placeholderNode = computed(() =>
         ]),
       }),
       h(Prompts, {
-        title: "Do you want?",
+        // title: "Do you want?",
+        title: "功能支持？",
         items: placeholderPromptsItems,
         styles: {
           list: {
@@ -1056,18 +1067,18 @@ const items = computed<BubbleListProps["items"]>(() => {
               },
               "复制"
             ),
-            h(
-              Button,
-              {
-                type: "text",
-                size: "small",
-                icon: h(copyStatus[id] ? CheckOutlined : CopyOutlined),
-                onClick: () => {
-                  return;
-                },
-              },
-              "复制"
-            ),
+            // h(
+            //   Button,
+            //   {
+            //     type: "text",
+            //     size: "small",
+            //     icon: h(copyStatus[id] ? CheckOutlined : CopyOutlined),
+            //     onClick: () => {
+            //       return;
+            //     },
+            //   },
+            //   "复制"
+            // ),
           ]),
       };
     }
@@ -1164,25 +1175,23 @@ watch(
 );
 </script>
 
+<style scoped>
+.model-cascader .ant-cascader-menu-item-content {
+  display: flex;
+  align-items: center;
+  font-size: 1px;
+  height: 140px;
+}
+
+.model-cascader .ant-cascader-menus .ant-cascader-menu {
+  /* 你的样式 */
+  border-radius: 8px;
+  overflow: hidden;
+  height: 260px;
+}
+</style>
+
 <style>
-.ai-chat-modal .ant-modal-content {
-  padding: 0 !important;
-  border-radius: 16px !important;
-  overflow: hidden; /* 🔥 防止子元素溢出破坏圆角 */
-  box-shadow: 0 0 30px rgba(0, 0, 0, 0.3); /* 可选：让它更柔和 */
-}
-
-/* 让 modal-body 也不留白，并支持内容填满 */
-.ai-chat-modal .ant-modal-body {
-  padding: 0;
-  height: 100%;
-}
-
-.ai-chat-modal .ant-modal {
-  background-color: transparent !important;
-  box-shadow: none !important;
-}
-
 .markdown-body p {
   display: inline-block;
   /* 或 display: inline; */
@@ -1197,20 +1206,23 @@ watch(
   transition: background 0.2s;
 }
 
-.ant-cascader-menu-item-content {
-  display: flex;
-  align-items: center;
-  font-size: 1px;
-  height: 40px;
+.ai-chat-modal .ant-modal-content {
+  padding: 0;
+  border-radius: 16px;
+  overflow: hidden; /* 🔥 防止子元素溢出破坏圆角 */
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.3); /* 可选：让它更柔和 */
 }
 
-.ant-cascader-menus .ant-cascader-menu {
-  /* 你的样式 */
-  border-radius: 8px;
-  overflow: hidden;
-  height: 260px;
+/* 让 modal-body 也不留白，并支持内容填满 */
+.ai-chat-modal .ant-modal-body {
+  padding: 0;
+  height: 100%;
 }
 
+.ai-chat-modal .ant-modal {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
 .sender-wrapper {
   position: sticky;
   bottom: 0;

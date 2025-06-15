@@ -8,18 +8,18 @@
         <a-layout-content class="content">
           <router-view />
         </a-layout-content>
-        <a-layout-footer v-if="route.name == 'Home'" class="absolute-footer">
-          BNU Tiku Frontend ©2025 Created by ht
-          <!--      <a href="https://github.com/Colentine/bnu-tiku-frontend"-->
-          <!--        ><GithubOutlined-->
-          <!--      /></a>-->
-        </a-layout-footer>
-        <a-layout-footer v-else class="footer">
-          BNU Tiku Frontend ©2025 Created by ht
-          <!--      <a href="https://github.com/Colentine/bnu-tiku-frontend"-->
-          <!--        ><GithubOutlined-->
-          <!--      /></a>-->
-        </a-layout-footer>
+        <!--        <a-layout-footer v-if="route.name == 'Home'">-->
+        <!--          BNU Tiku Frontend ©2025 Created by ht-->
+        <!--          &lt;!&ndash;      <a href="https://github.com/Colentine/bnu-tiku-frontend"&ndash;&gt;-->
+        <!--          &lt;!&ndash;        ><GithubOutlined&ndash;&gt;-->
+        <!--          &lt;!&ndash;      /></a>&ndash;&gt;-->
+        <!--        </a-layout-footer>-->
+        <!--        <a-layout-footer v-else class="footer">-->
+        <!--          BNU Tiku Frontend ©2025 Created by ht-->
+        <!--          &lt;!&ndash;      <a href="https://github.com/Colentine/bnu-tiku-frontend"&ndash;&gt;-->
+        <!--          &lt;!&ndash;        ><GithubOutlined&ndash;&gt;-->
+        <!--          &lt;!&ndash;      /></a>&ndash;&gt;-->
+        <!--        </a-layout-footer>-->
       </a-layout>
     </div>
   </div>
