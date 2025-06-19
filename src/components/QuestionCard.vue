@@ -5,7 +5,10 @@
         head-style="font-weight: normal; height: 22px"
         hoverable
         :loading="loading"
-        style="margin-bottom: 10px"
+        style="
+          margin-bottom: 10px;
+          box-shadow: 3px 3px 3px rgba(204, 204, 204, 0.5);
+        "
       >
         <template #title>
           <div>

@@ -163,7 +163,6 @@ function onSearchQuestion() {
     path: "/search/question/by/keyword",
     query: { kw: keyword.value.trim() },
   });
-  keyword.value = "";
 }
 const logout = () => {
   userStore.logout();

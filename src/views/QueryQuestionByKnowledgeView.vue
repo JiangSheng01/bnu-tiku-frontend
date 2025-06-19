@@ -62,11 +62,7 @@ import { onMounted, ref } from "vue";
 
 import axios from "axios";
 import QuestionCard from "@/components/QuestionCard.vue";
-import {
-  getQuestionByCombination,
-  getQuestionsByKp,
-  QueryParams,
-} from "@/api/question";
+import { getQuestionByCombination, QueryParams } from "@/api/question";
 import QuestionFilter from "@/components/QuestionFilter.vue";
 import BasketButton from "@/components/BasketButton.vue";
 import { message } from "ant-design-vue";
@@ -91,8 +87,9 @@ const loading = ref(true);
 onMounted(() => {
   const res = getQuestionByCombination(combinationLabel.value)
     .then((res) => {
-      allQuestions.value = res.data.questions;
-      total.value = res.data.totalCount;
+      allQuestions.value = res.data.data.questions;
+
+      total.value = res.data.data.totalCount;
     })
     .finally(() => {
       loading.value = false;
@@ -105,6 +102,7 @@ const receiveData = (data: any) => {
     selectedKp.value = data.selectedKey;
     total.value = data.resultData.totalCount;
   }
+
   loading.value = data.loading;
 };
 
@@ -120,8 +118,8 @@ const receiveLabel = async (data: any) => {
 
   const res = await getQuestionByCombination(combinationLabel.value);
 
-  allQuestions.value = res.data.questions;
-  total.value = res.data.totalCount;
+  allQuestions.value = res.data.data.questions;
+  total.value = res.data.data.totalCount;
   loading.value = false;
   // alert(combinationLabel.value.grade);
   // message.success("**********");
@@ -142,12 +140,19 @@ const receiveLabel = async (data: any) => {
 
 const onChange = async (pageNumber: number) => {
   loading.value = true;
+
   combinationLabel.value.pageNumber = pageNumber;
+
   combinationLabel.value.pageSize = currentPageSize.value;
+
   const res = await getQuestionByCombination(combinationLabel.value);
-  allQuestions.value = res.data.questions;
-  total.value = res.data.totalCount;
+
+  allQuestions.value = res.data.data.questions;
+
+  total.value = res.data.data.totalCount;
+
   loading.value = false;
+
   console.log(allQuestions.value);
 };
 </script>

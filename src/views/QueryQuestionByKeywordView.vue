@@ -45,21 +45,29 @@
 
 <script setup lang="ts">
 import QuestionCard from "@/components/QuestionCard.vue";
+
 import { useRoute } from "vue-router";
+
 import { watch } from "vue";
+
 import { ref } from "vue";
-import {
-  getQuestionByCombination,
-  getQuestionsByKeyword,
-  QueryParams,
-} from "@/api/question";
+
+import { getQuestionByCombination, QueryParams } from "@/api/question";
+
 import QuestionFilter from "@/components/QuestionFilter.vue";
+
 const route = useRoute();
+
 const keyword = ref(route.query.kw || "");
+
 const allQuestions = ref([]);
+
 const total = ref(0);
+
 let currentPageNumber = ref(1);
+
 let currentPageSize = ref(10);
+
 const combinationLabel = ref<QueryParams>({
   knowledgePointName: "",
   keyword: "",
@@ -76,10 +84,12 @@ const searchQuestionsByKeyword = async () => {
     combinationLabel.value.keyword = searchParam;
     combinationLabel.value.pageNumber = currentPageNumber.value;
     combinationLabel.value.pageSize = currentPageSize.value;
+
     const res = await getQuestionByCombination(combinationLabel.value);
-    allQuestions.value = res.data.questions;
-    total.value = res.data.totalCount;
-    console.log(`📘 查询关键词「${searchParam}」返回结果:`, res.data);
+    allQuestions.value = res.data.data.questions;
+    total.value = res.data.data.totalCount;
+
+    console.log(`📘 查询关键词「${searchParam}」返回结果:`, res.data.data);
   } catch (err) {
     console.error("❌ 查询失败:", err);
   }
@@ -96,6 +106,7 @@ watch(
   () => route.query.kw,
   (newVal: any) => {
     keyword.value = newVal;
+
     searchQuestionsByKeyword();
   }
 );
@@ -106,12 +117,12 @@ const receiveLabel = async (data: any) => {
   combinationLabel.value.simpleQuestionType = data.selected.type;
   combinationLabel.value.pageNumber = currentPageNumber.value;
   combinationLabel.value.pageSize = currentPageSize.value;
+
   console.log(combinationLabel.value);
 
   const res = await getQuestionByCombination(combinationLabel.value);
-
-  allQuestions.value = res.data.questions;
-  total.value = res.data.totalCount;
+  allQuestions.value = res.data.data.questions;
+  total.value = res.data.data.totalCount;
   // alert(combinationLabel.value.grade);
   // message.success("**********");
 };

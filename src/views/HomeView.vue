@@ -80,9 +80,13 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
+
 import { message } from "ant-design-vue";
+
 import "vue3-video-play/dist/style.css";
+
 import { createRouter, useRoute, useRouter } from "vue-router";
+
 const router = useRouter();
 
 // 搜索关键词
@@ -91,6 +95,7 @@ const query = ref("");
 function onSearch(value: string) {
   if (!value) {
     message.warning("请输入关键词");
+
     return;
   }
   // TODO: 路由跳转或接口请求

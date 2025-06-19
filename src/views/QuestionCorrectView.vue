@@ -344,7 +344,9 @@ watchEffect(() => {
   // const x = "1,2,3";
   // var strings = x.split("1");
   const knowledgePoints = cascaderValue.value.toString();
+
   const knowledgeArray = knowledgePoints.split(",");
+
   lastKnowledgePoint.value = knowledgeArray[knowledgeArray.length - 1];
 });
 
@@ -407,13 +409,16 @@ async function handleSubmit() {
       correctQuestParams.correction == question.value.question_explanation
     ) {
       message.error("请修改后再提交");
+
       return;
     }
   } else {
     console.log(correctQuestParams.correctTags);
+
     const b = areAllValuesEmpty(correctQuestParams.correctTags);
     if (b) {
       message.error("请修改后再提交");
+
       return;
     }
   }
@@ -422,6 +427,7 @@ async function handleSubmit() {
   const res = await correctQuestionById(correctQuestParams);
   visible.value = false;
   correctionContent.value = "";
+
   if (res.data.code == "SUCCESS") {
     message.success("修改已提交");
   } else {

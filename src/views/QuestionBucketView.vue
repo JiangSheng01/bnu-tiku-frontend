@@ -45,10 +45,10 @@ import { computed, ref, toRefs, watchEffect } from "vue";
 import { useQuestionBasketStore } from "@/stores/questionBasket";
 import { message } from "ant-design-vue";
 import { exportQuestionByIds } from "@/api/question";
+
 const maxCount = ref(20);
 const { questionBasket } = toRefs(useQuestionBasketStore());
 const downloading = ref(false);
-defineEmits(["export"]);
 const allQuestions = ref(Array.from(questionBasket.value.values()));
 const clearAll = () => {
   questionBasket.value.clear();
@@ -66,7 +66,6 @@ const exportAsWord = async () => {
       const filename = `题库导出.doc`;
       const blob = new Blob([res.data]);
       const url = window.URL.createObjectURL(blob);
-
       // 模拟 a 标签点击下载
       const a = document.createElement("a");
       a.href = url;

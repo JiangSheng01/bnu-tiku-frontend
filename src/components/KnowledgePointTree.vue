@@ -73,7 +73,7 @@ import { debounce } from "lodash";
 import treeData from "@/Data/TreeData";
 import axios, { CancelTokenSource } from "axios";
 import { defineEmits } from "vue";
-import { getQuestionsByKp } from "@/api/question";
+import { getQuestionByCombination, QueryParams } from "@/api/question";
 import { getKp } from "@/api/knowledge";
 let searchBoxText = ref("");
 let selectedKeys = ref([]);
@@ -94,6 +94,15 @@ let expandedKeys = ref([
   "0-10",
   "0-11",
 ]);
+const combinationLabel = ref<QueryParams>({
+  knowledgePointName: "",
+  keyword: "",
+  difficulty: "all",
+  gradeId: -1,
+  simpleQuestionType: -1,
+  pageNumber: 1,
+  pageSize: 10,
+});
 const emit = defineEmits(["send"]);
 const onSelect = async (selectedKeys: any, info: any) => {
   emit("send", { resultData: null, selectedKey: null, loading: true });
@@ -103,9 +112,14 @@ const onSelect = async (selectedKeys: any, info: any) => {
   }
   const kpName = info.node.title;
   try {
-    const res = await getQuestionsByKp(kpName, "1", "10");
+    combinationLabel.value.knowledgePointName = kpName;
+    const res = await getQuestionByCombination(combinationLabel.value);
     console.log(`📘 查询知识点「${kpName}」返回结果:`, res.data);
-    emit("send", { resultData: res.data, selectedKey: kpName, loading: false });
+    emit("send", {
+      resultData: res.data.data,
+      selectedKey: kpName,
+      loading: false,
+    });
   } catch (err) {
     console.error("❌ 查询失败:", err);
     emit("send", { resultData: null, selectedKey: null, loading: false });
@@ -158,9 +172,14 @@ const onSearchQuestion = async (name: string) => {
   emit("send", { resultData: null, selectedKey: null, loading: true });
   const kpName = name.trim();
   try {
-    const res = await getQuestionsByKp(kpName, "1", "10");
-    console.log(`📘 查询知识点「${kpName}」返回结果:`, res.data);
-    emit("send", { resultData: res.data, selectedKey: kpName, loading: false });
+    combinationLabel.value.knowledgePointName = kpName;
+    const res = await getQuestionByCombination(combinationLabel.value);
+    console.log(`📘 查询知识点「${kpName}」返回结果:`, res.data.data);
+    emit("send", {
+      resultData: res.data.data,
+      selectedKey: kpName,
+      loading: false,
+    });
   } catch (err) {
     console.error("❌ 查询失败:", err);
     emit("send", { resultData: null, selectedKey: null, loading: false });
@@ -178,7 +197,7 @@ const onSearchQuestion = async (name: string) => {
   padding-bottom: 20px;
   padding-top: 10px;
   border-radius: 6px;
-  box-shadow: 7px 7px 4px rgba(112, 112, 112, 0.5);
+  box-shadow: 7px 7px 7px rgba(154, 154, 154, 0.5);
   overflow-x: hidden;
 }
 .tree-scroll-container {
