@@ -64,6 +64,8 @@ import { ref } from "vue";
 import { login } from "@/api/user";
 import { message } from "ant-design-vue";
 import { useUserStore } from "@/stores/user";
+import { triggerAfterLogin } from "@/api/auth";
+import { useRoute, useRouter } from "vue-router";
 const showPassword = ref(false);
 const toggle = () => (showPassword.value = !showPassword.value);
 const userName = ref("");
@@ -71,7 +73,8 @@ const userPassword = ref("");
 const userStore = useUserStore();
 const isLogin = ref(false);
 const emit = defineEmits(["sendVisible", "changeToRegister"]);
-
+const router = useRouter();
+const route = useRoute();
 const toRegister = () => {
   emit("changeToRegister", { key: "register" });
 };
@@ -94,6 +97,10 @@ async function onLogin() {
   userStore.setUserInfo(res.data.data.userInfo);
   userStore.setToken(res.data.data.token);
   message.success("登录成功");
+  console.log(userStore.userInfo);
+  const redirect = (route.query.redirect as string) || "/";
+  await router.replace(redirect);
+  triggerAfterLogin();
   emit("sendVisible", { visible: false });
   // 在此处添加登录逻辑
 }

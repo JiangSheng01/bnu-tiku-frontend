@@ -10,6 +10,10 @@ export const useUserStore = defineStore("user", {
       userRole: string;
       avatarUrl: string;
     },
+    showLogin: false,
+    selectedKey: "login",
+    email: "",
+    conversationIds: ["0"],
   }),
 
   actions: {

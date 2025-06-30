@@ -13,7 +13,7 @@
         <a-col :span="8" class="qr-section">
           <div class="qr-container">
             <img
-              src="../assets/bnu-tiku-high-resolution-logo-grayscale-transparent.png"
+              src="../assets/qr_code_sample.png"
               alt="扫码登录"
               class="qr-image"
             />
@@ -21,8 +21,12 @@
         </a-col>
 
         <!-- 中间灰色分隔线 -->
-        <a-col :span="2" class="divider-col">
+        <a-col :span="2" class="divider-col" v-show="selectedKey == 'login'">
           <div class="divider"></div>
+        </a-col>
+
+        <a-col :span="2" class="divider-col" v-show="selectedKey == 'register'">
+          <div class="long-divider"></div>
         </a-col>
 
         <!-- 右侧登录表单 -->
@@ -92,12 +96,18 @@
 
 <script setup lang="ts">
 import { GithubOutlined } from "@ant-design/icons-vue";
-import { defineModel, ref } from "vue";
+import { defineModel, ref, watch } from "vue";
 import UserLoginForm from "@/components/UserLoginForm.vue";
 import UserRegisterForm from "@/components/UserRegisterForm.vue";
 import { useUserStore } from "@/stores/user";
+import { storeToRefs } from "pinia";
+import { useHeaderViewStore } from "@/stores/HeaderView";
 const visible = defineModel<boolean>("visible", { default: false });
-const selectedKey = ref("login");
+// const selectedKey = ref("login");
+const userStore = useUserStore();
+const headerViewStore = useHeaderViewStore();
+const { selectedKey, email } = storeToRefs(userStore);
+const { selectedKeys } = storeToRefs(headerViewStore);
 const loginSign = "login";
 const registerSign = "register";
 const selectKey = (key: string) => {
@@ -109,10 +119,21 @@ const receiveVisible = (res: any) => {
 const receiveLoginSign = (res: any) => {
   selectedKey.value = res.key;
 };
-
 const receiveRegisterSign = (res: any) => {
   selectedKey.value = res.key;
 };
+watch(visible, (newVal, oldVal) => {
+  if (!newVal) {
+    email.value = "";
+    selectedKeys.value = [];
+  }
+});
+
+watch(selectedKey, (newVal, oldVal) => {
+  if (newVal == "login") {
+    email.value = "";
+  }
+});
 </script>
 
 <style scoped>
@@ -129,7 +150,7 @@ const receiveRegisterSign = (res: any) => {
 .qr-image {
   margin-top: 8px;
   width: 190px;
-  height: 130px;
+  height: 190px;
 }
 
 .divider-col {
@@ -141,6 +162,12 @@ const receiveRegisterSign = (res: any) => {
 .divider {
   width: 1px;
   height: 240px;
+  background-color: #e0e0e0;
+}
+
+.long-divider {
+  width: 1px;
+  height: 320px;
   background-color: #e0e0e0;
 }
 

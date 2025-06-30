@@ -50,6 +50,7 @@
               :total="total"
               v-model:page-size="currentPageSize"
               @change="onChange"
+              style="margin-bottom: 30px"
           /></a-col>
         </a-col>
       </a-row>
@@ -66,7 +67,10 @@ import { getQuestionByCombination, QueryParams } from "@/api/question";
 import QuestionFilter from "@/components/QuestionFilter.vue";
 import BasketButton from "@/components/BasketButton.vue";
 import { message } from "ant-design-vue";
-const allQuestions = ref([]);
+import { useAllQuestionsStore } from "@/stores/AllQuestions";
+import { storeToRefs } from "pinia";
+const allQuestionsStore = useAllQuestionsStore();
+const { allQuestions } = storeToRefs(allQuestionsStore);
 const currentPageNumber = ref<number>(1);
 const currentPageSize = ref<number>(10);
 const selectedKp = ref("beforeMount");

@@ -6,7 +6,7 @@ interface loginParam {
 interface registerParam {
   userName: string;
   userPassword: string;
-  email: string;
+  email: string | null;
   checkPassword: string;
 }
 

@@ -21,13 +21,14 @@ export async function syncUserFromServer() {
   const { token } = storeToRefs(userStore);
 
   if (token.value.length == 0) {
-    return false;
+    return;
   }
 
   try {
     const res = await request.get("/user/current");
-    userStore.setUserInfo(res.data.data.userInfo);
-    return true;
+    userStore.setUserInfo(res.data.data);
+    // console.log("sync user result", userStore.userInfo);
+    return res.data.data;
   } catch (error) {
     // token 无效或 Redis 过期
     message.error("登录状态已失效，请重新登录");

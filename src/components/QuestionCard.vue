@@ -63,7 +63,7 @@
               <div v-katex>{{ q.question_explanation }}</div>
             </div>
           </div>
-          <div v-else>
+          <div v-if="q.question_type == 1">
             <div class="stem-container" v-katex>
               {{ q.composite_question_stem }}
             </div>
@@ -99,13 +99,34 @@
         </div>
         <div class="question-divider"></div>
         <div class="actions">
-          <div class="action" @click="showCorrect(i)">纠错</div>
+          <div
+            class="action"
+            @click="
+              requireLogin(() => {
+                router.push({
+                  path: '/search/question/by/kp',
+                  query: { redirect: '/search/question/by/kp' },
+                });
+                showCorrect(i);
+              })
+            "
+          >
+            纠错
+          </div>
           <div class="action" @click="onCardClick(q.question_id)">详情</div>
           <!--          <div class="action">收藏</div>-->
           <a-button
             type="link"
             class="add-question-bucket"
-            @click="toggleBasket(q)"
+            @click="
+              requireLogin(() => {
+                router.push({
+                  path: '/search/question/by/kp',
+                  query: { redirect: '/search/question/by/kp' },
+                });
+                toggleBasket(q);
+              })
+            "
             v-show="showAddToBasket && !questionBasket.has(q.question_id)"
           >
             加入试题篮
@@ -126,7 +147,7 @@
   <!--  <BasketButton :count="basketCount" />-->
   <QuestionCorrectView
     v-model:visible="correctShow"
-    v-model:question="clikedQuestion"
+    v-model:question="clickedQuestion"
   />
 </template>
 
@@ -136,12 +157,21 @@ import { useQuestionBasketStore } from "@/stores/questionBasket";
 import QuestionCorrectView from "@/views/QuestionCorrectView.vue";
 import { message } from "ant-design-vue";
 import { storeToRefs } from "pinia";
+import { requireLogin } from "@/api/auth";
+import router from "@/router";
+import { useRoute } from "vue-router";
+import { useQuestionCorrectStore } from "@/stores/questionCorrect";
+import { useAllQuestionsStore } from "@/stores/AllQuestions";
 const clickedQuestionIds = ref(new Set());
 const questionBasketStore = useQuestionBasketStore();
 const { questionBasket } = storeToRefs(questionBasketStore);
-const correctShow = ref(false);
-const clickedQuestionId = ref(0);
-const clikedQuestion = ref(null);
+const questionCorrectStore = useQuestionCorrectStore();
+const { correctShow, clickedQuestionId, clickedQuestion } =
+  storeToRefs(questionCorrectStore);
+const route = useRoute();
+const allQuestionsStore = useAllQuestionsStore();
+const { allQuestions } = storeToRefs(allQuestionsStore);
+console.log(allQuestions.value);
 const props = defineProps<{
   showAddToBasket: {
     type: boolean;
@@ -179,15 +209,19 @@ function toggleBasket(q: any) {
 //   message.success("试题篮：已添加");
 // };
 
-let { allQuestions, loading } = toRefs(props);
+let { loading } = toRefs(props);
 
 const showCorrect = (questionId: any) => {
   correctShow.value = true;
   clickedQuestionId.value = questionId;
   if (allQuestions.value.length > 1) {
-    clikedQuestion.value = allQuestions.value[clickedQuestionId.value];
+    clickedQuestion.value = allQuestions.value[clickedQuestionId.value];
+    // console.log("*********" + clickedQuestion.value);
+    // console.log(allQuestions.value);
+    // console.log(allQuestions.value[clickedQuestionId.value]);
   }
   // console.log(allQuestions.value[clickedQuestion.value]);
+  console.log(clickedQuestion.value);
 };
 
 const onCardClick = (id: any) => {

@@ -16,12 +16,20 @@
       ><span style="margin-right: 8px; margin-left: 8px">名称</span></template
     >
     <template #suffix
-      ><LoadingOutlined v-if="isNameTyping" style="color: #6fc6ed" />
+      ><LoadingOutlined
+        v-if="isNameTyping && userRegisterName"
+        style="color: #6fc6ed"
+      />
       <CheckOutlined
-        v-if="hasNameChecked && isNameValid"
-        style="color: #6fc6ed" />
-      <CloseOutlined v-if="hasNameChecked && !isNameValid" style="color: red"
-    /></template>
+        v-if="hasNameChecked && isNameValid && userRegisterName"
+        style="color: #6fc6ed"
+      />
+      <a-tooltip title="昵称格式不合法，需为2~16位中英文/数字/下划线"
+        ><CloseOutlined
+          v-if="hasNameChecked && !isNameValid && userRegisterName"
+          style="color: red"
+      /></a-tooltip>
+    </template>
   </a-input>
   <a-input
     style="
@@ -38,12 +46,15 @@
       ><span style="margin-right: 8px; margin-left: 8px">邮箱</span></template
     >
     <template #suffix
-      ><LoadingOutlined v-if="isEmailTyping" style="color: #6fc6ed" />
+      ><LoadingOutlined v-if="isEmailTyping && email" style="color: #6fc6ed" />
       <CheckOutlined
-        v-if="hasEmailChecked && isEmailValid"
+        v-if="hasEmailChecked && isEmailValid && email"
         style="color: #6fc6ed" />
-      <CloseOutlined v-if="hasEmailChecked && !isEmailValid" style="color: red"
-    /></template>
+      <a-tooltip title="邮箱为空或格式不正确">
+        <CloseOutlined
+          v-if="hasEmailChecked && !isEmailValid && email"
+          style="color: red" /></a-tooltip
+    ></template>
   </a-input>
   <a-input
     v-model:value="userRegisterPassword"
@@ -61,14 +72,20 @@
       ><span style="margin-right: 8px; margin-left: 8px">密码</span></template
     >
     <template #suffix
-      ><LoadingOutlined v-if="isPasswordTyping" style="color: #6fc6ed" />
+      ><LoadingOutlined
+        v-if="isPasswordTyping && userRegisterPassword"
+        style="color: #6fc6ed"
+      />
       <CheckOutlined
-        v-if="hasPasswordChecked && isPasswordValid"
-        style="color: #6fc6ed" />
-      <CloseOutlined
-        v-if="hasPasswordChecked && !isPasswordValid"
-        style="color: red"
-    /></template>
+        v-if="hasPasswordChecked && isPasswordValid && userRegisterPassword"
+        style="color: #6fc6ed"
+      />
+      <a-tooltip title="密码应为6-20位数字和字母组合"
+        ><CloseOutlined
+          v-if="hasPasswordChecked && !isPasswordValid && userRegisterPassword"
+          style="color: red"
+      /></a-tooltip>
+    </template>
   </a-input>
   <a-input
     v-model:value="checkPassword"
@@ -87,30 +104,46 @@
       ><span style="margin-left: 8px; margin-right: 8px">确认</span></template
     >
     <template #suffix
-      ><LoadingOutlined v-if="isCheckPasswordTyping" style="color: #6fc6ed" />
+      ><LoadingOutlined
+        v-if="isCheckPasswordTyping && checkPassword"
+        style="color: #6fc6ed"
+      />
       <CheckOutlined
-        v-if="hasCheckPasswordChecked && isCheckPasswordValid"
-        style="color: #6fc6ed" />
-      <CloseOutlined
-        v-if="hasCheckPasswordChecked && !isCheckPasswordValid"
-        style="color: red"
-    /></template>
+        v-if="hasCheckPasswordChecked && isCheckPasswordValid && checkPassword"
+        style="color: #6fc6ed"
+      />
+      <a-tooltip title="两次密码输入不一致"
+        ><CloseOutlined
+          v-if="
+            hasCheckPasswordChecked && !isCheckPasswordValid && checkPassword
+          "
+          style="color: red"
+      /></a-tooltip>
+    </template>
   </a-input>
   <a-row>
-    <div v-if="hasNameChecked && !isNameValid" style="color: #afafaf">
+    <div
+      v-if="hasNameChecked && !isNameValid && userRegisterName"
+      style="color: #afafaf"
+    >
       昵称格式不合法，需为2~16位中英文/数字/下划线
     </div>
-    <div v-else-if="hasEmailChecked && !isEmailValid" style="color: #afafaf">
-      邮箱格式不正确
+    <div
+      v-else-if="hasEmailChecked && !isEmailValid && email"
+      style="color: #afafaf"
+    >
+      邮箱为空或格式不正确
     </div>
     <div
-      v-else-if="hasPasswordChecked && !isPasswordValid"
+      v-else-if="hasPasswordChecked && !isPasswordValid && userRegisterPassword"
       style="color: #afafaf"
     >
       密码应为6-20位数字和字母组合
     </div>
     <div
-      v-else-if="hasCheckPasswordChecked && !isCheckPasswordValid"
+      v-else-if="
+        hasCheckPasswordChecked && !isCheckPasswordValid && checkPassword
+      "
       style="color: #afafaf"
     >
       两次密码输入不一致
@@ -144,9 +177,12 @@ import { ref, watch, computed } from "vue";
 import { debounce } from "lodash";
 import { message } from "ant-design-vue";
 import { register } from "@/api/user";
+import { useUserStore } from "@/stores/user";
+import { storeToRefs } from "pinia";
+const userStore = useUserStore();
+const { email } = storeToRefs(userStore);
 const userRegisterName = ref<string>("");
 const userRegisterPassword = ref("");
-const email = ref("");
 const checkPassword = ref("");
 
 const isNameTyping = ref(false);
@@ -186,7 +222,7 @@ async function onRegister() {
     isRegister.value = false;
     return;
   }
-  message.success(res.data.message);
+  message.success("注册成功！");
   isRegister.value = false;
   emit("changeToLogin", { key: "login" });
   // 在此处添加登录逻辑

@@ -275,6 +275,9 @@ import RichEditor from "@/components/RichEditor.vue";
 import { kpOptions, Option } from "@/Data/TreeDataOptons";
 import { message } from "ant-design-vue";
 import { CorrectParams, correctQuestionById } from "@/api/question";
+import { useUserStore } from "@/stores/user";
+import { storeToRefs } from "pinia";
+import { syncUserFromServer } from "@/api/user";
 const visible = defineModel<boolean>("visible", { default: false }); // 由父组件控制显示
 const question = defineModel("question", {
   default: {
@@ -300,6 +303,9 @@ const selectedGradeKeys = ref([]);
 const selectedDifficultyKeys = ref([]);
 const selectedQuestionTypeKeys = ref("");
 const lastKnowledgePoint = ref("");
+const userStore = useUserStore();
+const { userInfo } = storeToRefs(userStore);
+console.log("question correct is ", userInfo.value);
 const filter = (inputValue: string, path: Option[]) => {
   return path.some(
     (option) =>

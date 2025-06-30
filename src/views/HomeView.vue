@@ -29,13 +29,15 @@
                 <a-col span="17">
                   <div class="email-register-box">
                     <a-input
-                      v-model:value="query"
+                      v-model:value="email"
                       placeholder="请输入邮箱"
                       size="large"
                       class="register-input"
                       @search="onSearch"
                     />
-                    <a-button class="register-button"> 注册 </a-button>
+                    <a-button class="register-button" @click="registerShow">
+                      注册
+                    </a-button>
                   </div>
                 </a-col>
                 <a-col span="1"></a-col>
@@ -44,7 +46,8 @@
                     class="enter-question-select"
                     @click="enterSelectPage"
                   >
-                    进入选题页
+                    <!--                    进入选题页-->
+                    进入题库
                   </a-button>
                 </a-col>
               </a-row>
@@ -80,18 +83,19 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
-
 import { message } from "ant-design-vue";
-
 import "vue3-video-play/dist/style.css";
-
 import { createRouter, useRoute, useRouter } from "vue-router";
-
+import { useUserStore } from "@/stores/user";
+import { storeToRefs } from "pinia";
+import { syncUserFromServer } from "@/api/user";
 const router = useRouter();
-
+const userStore = useUserStore();
+const { token, showLogin, selectedKey, email, userInfo } =
+  storeToRefs(userStore);
+console.log("home user info is " + userInfo.value);
 // 搜索关键词
 const query = ref("");
-
 function onSearch(value: string) {
   if (!value) {
     message.warning("请输入关键词");
@@ -101,9 +105,16 @@ function onSearch(value: string) {
   // TODO: 路由跳转或接口请求
   console.log("搜索关键字 =>", value);
 }
-
+// alert(userStore.userInfo?.userAccount);
 function enterSelectPage() {
   router.push({ path: "/search/question/by/kp" });
+  alert(userStore.userInfo?.userAccount);
+}
+
+function registerShow() {
+  showLogin.value = true;
+  selectedKey.value = "register";
+  // alert(email.value);
 }
 </script>
 

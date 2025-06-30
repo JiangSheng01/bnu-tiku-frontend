@@ -29,8 +29,8 @@ import HeaderNavigation from "@/components/HeaderNavigation.vue";
 import { GithubOutlined } from "@ant-design/icons-vue";
 import { syncUserFromServer } from "@/api/user";
 import { useRoute } from "vue-router";
-syncUserFromServer();
-const route = useRoute();
+import { onBeforeMount } from "vue";
+// const route = useRoute();
 // alert(typeof route.name);
 </script>
 <style scoped>

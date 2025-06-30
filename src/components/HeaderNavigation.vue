@@ -17,7 +17,7 @@
     <a-col flex="100px" style="display: flex; align-items: center">
       <a-menu
         mode="horizontal"
-        v-model:selectedKeys="selectedLeftKeys"
+        v-model:selectedKeys="selectedKeys"
         @click="onLeftMenuClick"
         :style="{ lineHeight: '63px', marginLeft: '10px' }"
       >
@@ -39,6 +39,16 @@
             ></span
           >
         </a-menu-item>
+
+        <a-menu-item key="3" class="custom-menu-item">
+          <!--          <template #icon>-->
+          <!--            <ContainerTwoTone style="font-size: 16px; margin-right: 1px" />-->
+          <!--          </template>-->
+          <span class="custom-text"
+            ><router-link to="/question/bucket">试题篮</router-link></span
+          >
+        </a-menu-item>
+
         <!--        <a-menu-item key="3" class="custom-menu-item">-->
         <!--          <template #icon>-->
         <!--            <CloudTwoTone style="font-size: 16px; margin-right: 1px" />-->
@@ -70,53 +80,57 @@
       </a-input-search>
     </a-col>
 
-    <a-col flex="0 0 160px">
+    <a-col flex="0 0 180px">
       <a-row>
-        <a-col style="width: 60%">
+        <a-col style="width: 60%" v-if="token.length == 0">
           <div style="width: 100%" class="custom-text">
-            <a @click="chatShow" style="margin-right: 12px">✨ AI搜题</a>
-            <!--            <a style="margin-right: 12px">✨ AI搜题</a>-->
+            <a @click="loginShow">登录</a>
           </div>
-          <ChatModal v-model:visible="showChat" />
+          <UserModal v-model:visible="showLogin" />
         </a-col>
-        <a-col style="width: 40%">
-          <div style="width: 100%" class="custom-text">
-            <!--            <shopping-two-tone style="margin-right: 6px" />-->
-            <router-link to="/question/bucket">试题篮</router-link>
-          </div>
-        </a-col>
-        <!--        <a-col style="width: 80px" v-if="token.length == 0">-->
-        <!--          <div style="width: 100%" class="custom-text">-->
-        <!--            <SmileTwoTone />-->
-        <!--            <a @click="loginShow" style="margin-left: 6px">登录</a>-->
-        <!--          </div>-->
-        <!--          <UserModal v-model:visible="showLogin" />-->
-        <!--        </a-col>-->
         <a-col
           v-if="token.length != 0"
           style="
             display: flex;
             align-items: center;
             justify-content: right;
-            width: 80px;
+            width: 60%;
           "
         >
           <a-dropdown placement="bottomCenter">
             <template #overlay>
               <a-menu @click="handleMenuClick">
-                <a-menu-item key="profile">个人简介</a-menu-item>
-                <a-menu-item key="settings">设置</a-menu-item>
+                <a-menu-item key="profile">个人中心</a-menu-item>
+                <a-menu-item key="question-manage">试题管理</a-menu-item>
+                <a-menu-item key="user-manage">用户管理</a-menu-item>
+                <a-menu-item key="settings" style="text-align: center"
+                  >设置</a-menu-item
+                >
                 <a-menu-divider />
                 <a-menu-item key="logout" @click="logout">退出登录</a-menu-item>
               </a-menu>
             </template>
             <a-avatar
-              style="cursor: pointer; background-color: #87d068"
+              style="cursor: pointer; background-color: #2877ff"
+              size="large"
               icon="user"
               @click="showUserInfo"
             />
+            <!--              :src="require('../assets/hsaBNU.png')"-->
           </a-dropdown>
         </a-col>
+        <a-col style="width: 40%">
+          <div style="width: 100%" class="custom-text">
+            <a @click="requireLogin(chatShow)">AI搜题</a>
+            <!--            <a style="margin-right: 12px">✨ AI搜题</a>-->
+          </div>
+          <ChatModal v-model:visible="showChat" />
+        </a-col>
+        <!--        <a-col style="width: 33%">-->
+        <!--          <div style="width: 100%" class="custom-text">-->
+        <!--            &lt;!&ndash;            <shopping-two-tone style="margin-right: 6px" />&ndash;&gt;-->
+        <!--          </div>-->
+        <!--        </a-col>-->
       </a-row>
     </a-col>
   </a-row>
@@ -136,25 +150,34 @@ import UserModal from "@/components/UserModal.vue";
 import ChatModal from "@/components/ChatModal.vue";
 import { useUserStore } from "@/stores/user";
 import { storeToRefs } from "pinia";
+import { message } from "ant-design-vue";
+import { useHeaderViewStore } from "@/stores/HeaderView";
+import { requireLogin } from "@/api/auth";
 const userStore = useUserStore();
-const { token, userInfo } = storeToRefs(userStore);
-const showLogin = ref(false);
+const { token, userInfo, showLogin, selectedKey } = storeToRefs(userStore);
 const showChat = ref(false);
 const router = useRouter();
 const keyword = ref("");
+const headerViewStore = useHeaderViewStore();
+const { selectedKeys } = storeToRefs(headerViewStore);
+console.log("header Navigation user info is ");
+console.log(userInfo.value);
 const loginShow = () => {
   showLogin.value = true;
+  selectedKey.value = "login";
+  selectedKeys.value = [];
 };
 
 const chatShow = () => {
   showChat.value = true;
+  selectedKeys.value = [];
 };
-
 const showUserInfo = () => {
   console.log(token.value);
-  if (userInfo.value != null) {
-    console.log(userInfo.value);
-  }
+  console.log(userInfo.value);
+  // if (userInfo.value != null) {
+  //   console.log(userInfo.value);
+  // }
 };
 
 function onSearchQuestion() {
@@ -166,6 +189,10 @@ function onSearchQuestion() {
 }
 const logout = () => {
   userStore.logout();
+  showLogin.value = false;
+  router.replace("/");
+  selectedKeys.value = ["1"];
+  message.success("已退出登录！");
 };
 </script>
 

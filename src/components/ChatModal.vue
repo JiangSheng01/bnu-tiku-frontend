@@ -133,8 +133,9 @@
 
             <a-col span="19" style="margin-top: 18px">
               <div
+                ref="scrollArea"
                 style="
-                  height: 80vh;
+                  height: 800px;
                   overflow-y: auto;
                   overflow-x: hidden;
                   display: flex;
@@ -298,7 +299,7 @@ import type {
   ConversationsProps,
   PromptsProps,
 } from "ant-design-x-vue";
-import { defineModel, reactive, VNode, watchEffect } from "vue";
+import { defineModel, onMounted, reactive, VNode, watchEffect } from "vue";
 import { defineOptions, nextTick } from "vue";
 import {
   CloudUploadOutlined,
@@ -347,7 +348,14 @@ import markdownIt from "markdown-it";
 import { katex } from "@mdit/plugin-katex";
 import "katex/dist/katex.min.css";
 import MarkdownIt from "markdown-it";
+import { useUserStore } from "@/stores/user";
+import { storeToRefs } from "pinia";
+import { random } from "lodash";
+import { addConversation, getConversations, getMessages } from "@/api/chat";
+import { getCurrentUser, syncUserFromServer } from "@/api/user";
 // 级联数据结构
+const userStore = useUserStore();
+const { userInfo, conversationIds } = storeToRefs(userStore);
 const options = [
   {
     value: "openai",
@@ -372,8 +380,8 @@ const options = [
     children: [{ value: "deepseek-v3", label: "Deepseek-v3" }],
   },
   {
-    value: "dashScope",
-    label: "DashScope",
+    value: "qwen",
+    label: "通义千问",
     children: [
       { value: "qwen-plus", label: "Qwen-plus" },
       { value: "qwen-max", label: "Qwen-max" },
@@ -381,13 +389,22 @@ const options = [
   },
   {
     value: "bnu",
-    label: "BNU 自研",
-    children: [{ value: "neo", label: "Neo" }],
+    label: "师承万象",
+    children: [{ value: "MuduoLLM", label: "MuduoLLM" }],
+  },
+  {
+    value: "google",
+    label: "Gemma",
+    children: [{ value: "gemma3", label: "Gemma3" }],
   },
 ];
-
-const selected = ref(["DashScope", "Qwen-plus"]); // 比如 ['openai', 'gpt-4o']
-
+const modelId = ref("MuduoLLM");
+const selected = ref("MuduoLLM"); // 比如 ['openai', 'gpt-4o']
+watchEffect(() => {
+  const keyArr = selected.value.toString().split(",");
+  modelId.value = keyArr[keyArr.length - 1].trim();
+  // alert(modelId.value);
+});
 // 选中时回调
 function onChange(value: any, selectedOptions: any) {
   // value: ['openai', 'gpt-4o']
@@ -446,7 +463,7 @@ const styles = computed(() => {
       backgroundColor: "white",
     },
     chat: {
-      height: "87vh",
+      height: "100%",
       width: "100%",
       margin: "0 auto",
       "box-sizing": "border-box",
@@ -526,6 +543,67 @@ const defaultConversationsItems = [
     icon: h(MessageOutlined),
   },
 ];
+
+const getConversationsIds = async () => {
+  if (userStore.userInfo?.id) {
+    const res = await getConversations(userStore.userInfo?.id.toString());
+    conversationIds.value = res.data.data;
+    console.log("userStore is not null:", userStore.userInfo);
+  } else {
+    console.log("userStore is null");
+    return;
+  }
+
+  console.log("conversationIds is:", conversationIds);
+
+  if (conversationIds.value.length > 0) {
+    conversationsItems.value = conversationIds.value.map((item, index) => {
+      return {
+        key: item,
+        label: "新会话" + index,
+        icon: h(MessageOutlined),
+      };
+    });
+  } else {
+    console.log("conversationIds is null, will add id 0");
+    await addConversation(userStore.userInfo?.id.toString(), "0");
+    console.log("new conversationIds is:", conversationIds);
+  }
+};
+const visible = defineModel<boolean>("visible", { default: false });
+
+watch(visible, (oldVal) => {
+  if (oldVal == false) {
+    return;
+  }
+  getConversationsIds();
+});
+
+onMounted(async () => {
+  await syncUserFromServer();
+});
+
+// if (userStore.userInfo?.id) {
+//   const res = await getConversations(userStore.userInfo?.id.toString());
+//   conversationIds.value = res.data.data;
+//   alert(conversationIds.value);
+// } else {
+//   conversationIds.value = [];
+// }
+
+// if (conversationIds.value.length > 0) {
+//   defaultConversationsItems = conversationIds.value.map((item, index) => {
+//     return {
+//       key: item,
+//       label: "新会话" + index,
+//       icon: h(MessageOutlined),
+//     };
+//   });
+// } else {
+//   if (userStore.userInfo?.id) {
+//     await addConversation(userStore.userInfo?.id.toString(), "0");
+//   }
+// }
 
 const placeholderPromptsItems: PromptsProps["items"] = [
   {
@@ -625,7 +703,7 @@ const conversationsItems = ref(defaultConversationsItems);
 const activeKey = ref(defaultConversationsItems[0].key);
 const attachedFiles = ref<AttachmentsProps["items"]>([]);
 const agentRequestLoading = ref(false);
-const scrollArea = ref<HTMLDivElement | null>(null);
+const scrollArea = ref<HTMLDivElement>();
 const displayRender = (labels: any, selectedOptions: any) => {
   console.log(labels.labels);
   console.log(labels[1]);
@@ -642,267 +720,292 @@ const displayRender = (labels: any, selectedOptions: any) => {
 //   // 可以追加到页面的聊天记录中
 // };
 // ==================== Runtime ====================
-// const [agent] = useXAgent({
-//   request: async ({ message }, { onUpdate, onSuccess }) => {
-//     let fullContent = "";
-//     loading.value = true;
-//     agentRequestLoading.value = true;
-//     // 1. 发起 SSE 连接
-//     onUpdate(" ");
-//     if (message) {
-//       const es = new EventSource(
-//         `http://localhost:8080/api/chat/stream-chat?message=${encodeURIComponent(
-//           message
-//         )}`
-//       );
-//       es.onmessage = (event) => {
-//         if (event.data === "[END]") {
-//           agentRequestLoading.value = false;
-//           es.close();
-//           return;
-//         }
-//         loading.value = false;
-//         // 2. 每收到一个片段，拼接并onUpdate
-//         fullContent += event.data;
-//         onUpdate(fullContent);
-//         console.log(fullContent);
-//       };
-//       es.onerror = (e) => {
-//         es.close();
-//         onSuccess(fullContent); // 断线也收尾
-//       };
-//     }
-//   },
-// });
-
-const sleep = () => new Promise((resolve) => setTimeout(resolve, 500));
-
 const [agent] = useXAgent({
-  request: async ({ message }, { onSuccess, onUpdate }) => {
-    agentRequestLoading.value = true;
+  request: async ({ message }, { onUpdate, onSuccess }) => {
+    let fullContent = "";
     loading.value = true;
+    agentRequestLoading.value = true;
+    // 1. 发起 SSE 连接
     onUpdate(" ");
-    await sleep();
-    const stream = ["你好我是题库助手"];
-    //   "欧拉公式是数学中一个非常著名且重要的公式，它将复数、指数函数和三角函数紧密联系在一起。欧拉公式的形式为：\n" +
-    //     "\n" +
-    //     "$$\n" +
-    //     "e^{i\\theta} = \\cos\\theta +i\\sin\\theta\n" +
-    //     "$$\n" +
-    //     "\n" +
-    //     "其中：\n" +
-    //     "- $e$ 是自然对数的底（约等于 2.71828），\n" +
-    //     "- $i$ 是虚数单位，满足 $i^2 =-1$，\n" +
-    //     "- $\\theta$是任意实数，通常表示角度（以弧度为单位）。\n" +
-    //     "\n" +
-    //     "### 欧拉公式的推导\n" +
-    //     "欧拉公式的推导基于泰勒级数展开。我们知道以下三个函数的泰勒展开式：\n" +
-    //     "1.指数函数：$ e^x = 1+ x + \\frac{x^2}{2!}+ \\frac{x^3}{3!} + \\cdots $\n" +
-    //     "2. 正弦函数：$\\sinx = x -\\frac{x^3}{3!} + \\frac{x^5}{5!} -\\cdots$\n" +
-    //     "3. 余弦函数：$\\cos x = 1 - \\frac{x^2}{2!} +\\frac{x^4}{4!} - \\cdots$\n" +
-    //     "\n" +
-    //     "将 $e^{ix}$展开为泰勒级数：\n" +
-    //     "$$\n" +
-    //     "e^{ix} =1 + ix+ \\frac{(ix)^2}{2!} +\\frac{(ix)^3}{3!} + \\frac{(ix)^4}{4!} + \\cdots\n" +
-    //     "$$\n" +
-    //     "\n" +
-    //     "注意到 $(ix)^n$ 的性质：\n" +
-    //     "- 当 $n$ 是偶数时，$(ix)^n =(-1)^{n/2}x^n$（实数部分）。\n" +
-    //     "- 当 $n$ 是奇数时，$(ix)^n =(-1)^{(n-1)/2}ix^n$（虚数部分）。\n" +
-    //     "\n" +
-    //     "因此可以将 $e^{ix}$ 分成实部和虚部：\n" +
-    //     "$$\n" +
-    //     "e^{ix} = (1- \\frac{x^2}{2!} + \\frac{x^4}{4!}- \\cdots) + i(x- \\frac{x^3}{3!} + \\frac{x^5}{5!}- \\cdots)\n" +
-    //     "$$\n" +
-    //     "\n" +
-    //     "观察发现，实部正好是 $\\cosx$ 的泰勒展开式，虚部正好是$\\sin x$的泰勒展开式。因此我们得到：\n" +
-    //     "$$\n" +
-    //     "e^{ix}= \\cos x+ i\\sinx\n" +
-    //     "$$\n" +
-    //     "\n" +
-    //     "### 欧拉公式的应用\n" +
-    //     "1. **复数的极坐标表示**  \n" +
-    //     "  复数$z = a+ bi$可以写成极坐标形式：$z = re^{i\\theta}$，其中 $r = |z|$ 是模长，$\\theta =\\arg(z)$是辐角。\n" +
-    //     "\n" +
-    //     "2. **三角函数的关系**  \n" +
-    //     "  利用欧拉公式，可以推导出三角函数的恒等式。例如：\n" +
-    //     "  $$\n" +
-    //     "  \\cos\\theta = \\frac{e^{i\\theta} +e^{-i\\theta}}{2}, \\quad \\sin\\theta =\\frac{e^{i\\theta} - e^{-i\\theta}}{2i}\n" +
-    //     "  $$\n" +
-    //     "\n" +
-    //     "3. **特殊值**  \n" +
-    //     "  当$\\theta = \\pi$ 时，欧拉公式变为著名的 **欧拉恒等式**：\n" +
-    //     "  $$\n" +
-    //     "  e^{i\\pi}+ 1 =0\n" +
-    //     " $$\n" +
-    //     " 这个公式被认为是数学中最美丽的公式之一，因为它将五个重要的数学常数 $e,i, \\pi, 1,0$联系在了一起。\n" +
-    //     "\n" +
-    //     "4. **信号处理与傅里叶变换**  \n" +
-    //     " 欧拉公式在信号处理、傅里叶分析等领域有广泛应用。它使得正弦和余弦波可以用复指数形式表示，从而简化了计算。\n" +
-    //     "\n" +
-    //     "总结来说，欧拉公式不仅是数学中的瑰宝，还在物理、工程、计算机科学等领域有着深远的影响。",
-    // ];
-    // 假设你通过 fetch/EventSource 拿到流式片段
-    // const s =
-    //   "万有引力公式是由艾萨克·牛顿提出的，用来描述任意两个具有质量的物体之间的引力作用。这个公式是经典力学的重要组成部分，广泛应用于天文学、物理学和工程学等领域。\n" +
-    //   "\n" +
-    //   "### 公式表达\n" +
-    //   "万有引力公式可以表示为：\n" +
-    //   "$$\n" +
-    //   "F = G\\cdot \\frac{m_1\\cdot m_2}{r^2}\n" +
-    //   "$$\n" +
-    //   "\n" +
-    //   "其中：\n" +
-    //   "- $F$ 是两个物体之间的引力大小（单位：牛顿，N）。\n" +
-    //   "- $ G$ 是万有引力常数，其值约为 $6.674 \\times10^{-11} \\, \\text{N} \\cdot\\text{m}^2 /\\text{kg}^2 $。\n" +
-    //   "- $ m_1 $ 和$ m_2$ 分别是两个物体的质量（单位：千克，kg）。\n" +
-    //   "-$ r $ 是两个物体质心之间的距离（单位：米，m）。\n" +
-    //   "\n" +
-    //   "---\n" +
-    //   "\n" +
-    //   "###物理意义\n" +
-    //   "1. **引力与质量成正比**：两个物体的质量越大，它们之间的引力越大。\n" +
-    //   "2.**引力与距离平方成反比**：当两个物体之间的距离增大时，引力会迅速减小。具体来说，如果距离增加到原来的两倍，引力将减少到原来的四分之一。\n" +
-    //   "3. **普遍适用性**：这个公式适用于任何两个具有质量的物体，无论它们是天体（如行星、恒星）还是日常物品（如苹果和地球）。\n" +
-    //   "\n" +
-    //   "---\n" +
-    //   "\n" +
-    //   "### 应用举例\n" +
-    //   "1. **计算天体间的引力**：例如，地球对月球的引力可以通过该公式计算。\n" +
-    //   "  -地球质量$ m_1= 5.97 \\times10^{24} \\, \\text{kg} $\n" +
-    //   " - 月球质量 $ m_2 = 7.35 \\times 10^{22}\\, \\text{kg} $\n" +
-    //   "  - 地球与月球的平均距离 $r = 3.84 \\times 10^8 \\,\\text{m} $\n" +
-    //   "\n" +
-    //   " 将这些值代入公式，可以计算出地球对月球的引力。\n" +
-    //   "\n" +
-    //   "2. **自由落体运动**：地面上的物体受到的重力也可以看作是地球对该物体的万有引力。在这种情况下，公式可以简化为 $ F =m \\cdot g$，其中 $g $ 是重力加速度。\n" +
-    //   "\n" +
-    //   "---\n" +
-    //   "\n" +
-    //   "### 注意事项\n" +
-    //   "- 公式中的 $ r$ 是指两个物体的质心之间的距离。对于不规则形状的物体，需要考虑其质量分布。\n" +
-    //   "- 在微观尺度下（如原子或亚原子粒子），万有引力的作用非常微弱，通常可以忽略不计，而电磁力或其他基本力起主导作用。\n" +
-    //   "- 在极端条件下（如黑洞附近），牛顿的万有引力公式不再适用，需要用爱因斯坦的广义相对论来描述引力现象。\n" +
-    //   "\n" +
-    //   "希望这个介绍对你有所帮助！如果还有其他问题，请随时提问。";
-    // const stream = [
-    //   "余元公式是与**伽马函数**（Gamma 函数）相关的一个重要性质。伽马函数是阶乘的推广，定义为：\n" +
-    //     "\n" +
-    //     "$$\n" +
-    //     "\\Gamma(z) =\\int_0^\\infty t^{z-1} e^{-t} \\, dt, \\quad \\text{其中 }\\Re(z)> 0.\n" +
-    //     "$$\n" +
-    //     "\n" +
-    //     "伽马函数的一个非常重要的性质就是**余元公式**（Reflection Formula），也称为欧拉反射公式（Euler's Reflection Formula）。它的表达式为：\n" +
-    //     "\n" +
-    //     "$$\n" +
-    //     "\\Gamma(z) \\Gamma(1-z) = \\frac{\\pi}{\\sin(\\pi z)}, \\quad z\\notin \\mathbb{Z}.\n" +
-    //     "$$\n" +
-    //     "\n" +
-    //     "###公式的解释\n" +
-    //     "1. **适用范围**：该公式对所有非整数复数$z$都成立。\n" +
-    //     "2. **意义**：它将伽马函数在 $z$ 和 $1-z$处的值联系起来，揭示了伽马函数的对称性。\n" +
-    //     "3. **特殊值**：当$z = \\frac{1}{2}$ 时，代入公式可以得到：\n" +
-    //     "$$\n" +
-    //     "\\Gamma\\left(\\frac{1}{2}\\right)\\Gamma\\left(1 - \\frac{1}{2}\\right)= \\Gamma\\left(\\frac{1}{2}\\right)^2 =\\frac{\\pi}{\\sin\\left(\\frac{\\pi}{2}\\right)} = \\pi.\n" +
-    //     "$$\n" +
-    //     "  因此，$\\Gamma\\left(\\frac{1}{2}\\right) =\\sqrt{\\pi}$。\n" +
-    //     "\n" +
-    //     "###推导思路\n" +
-    //     "余元公式的推导需要用到复分析中的知识，尤其是**贝塔函数**（BetaFunction）和伽马函数的关系。以下是简要的推导过程：\n" +
-    //     "\n" +
-    //     "1. **贝塔函数的定义**：\n" +
-    //     " 贝塔函数定义为：\n" +
-    //     "  $$\n" +
-    //     "  B(x, y)= \\int_0^1 t^{x-1} (1-t)^{y-1} \\,dt, \\quad\\text{其中} \\Re(x), \\Re(y) > 0.\n" +
-    //     "  $$\n" +
-    //     "\n" +
-    //     "2. **贝塔函数与伽马函数的关系**：\n" +
-    //     " 贝塔函数可以用伽马函数表示为：\n" +
-    //     "  $$\n" +
-    //     "  B(x, y) =\\frac{\\Gamma(x) \\Gamma(y)}{\\Gamma(x+y)}.\n" +
-    //     "  $$\n" +
-    //     "\n" +
-    //     "3. **引入正弦函数**：\n" +
-    //     "  利用复平面上的积分技巧（例如，考虑单位圆上的积分），可以证明：\n" +
-    //     "  $$\n" +
-    //     "  B(x, 1-x) = \\int_0^1t^{x-1} (1-t)^{-x} \\, dt= \\frac{\\pi}{\\sin(\\pi x)}.\n" +
-    //     "  $$\n" +
-    //     "\n" +
-    //     "4. **结合伽马函数关系**：\n" +
-    //     " 将贝塔函数与伽马函数的关系代入上式，得到：\n" +
-    //     "  $$\n" +
-    //     " \\frac{\\Gamma(x) \\Gamma(1-x)}{\\Gamma(1)} = \\frac{\\pi}{\\sin(\\pi x)}.\n" +
-    //     "  $$\n" +
-    //     "\n" +
-    //     "  由于$\\Gamma(1) = 1$，最终得到余元公式：\n" +
-    //     "  $$\n" +
-    //     " \\Gamma(x)\\Gamma(1-x) = \\frac{\\pi}{\\sin(\\pix)}.\n" +
-    //     " $$\n" +
-    //     "\n" +
-    //     "###应用\n" +
-    //     "余元公式在数学和物理学中有广泛的应用，例如：\n" +
-    //     "1. 计算特定值的伽马函数（如 $\\Gamma\\left(\\frac{1}{2}\\right)$）。\n" +
-    //     "2. 在概率论中处理 Beta分布和 Gamma分布时的计算。\n" +
-    //     "3.在解析数论中研究 Riemann Zeta函数的性质。\n" +
-    //     "4. 在量子场论和弦理论中用于正则化技术。\n" +
-    //     "\n" +
-    //     "希望这个介绍对你有所帮助！如果有任何问题或需要更详细的推导，请随时提问！",
-    // ];
-    // const stream = [
-    //   "<em>Streaming<em/>",
-    //   "$123$",
-    //   "$123123$",
-    //   "instead ",
-    //   "$123123$ ",
-    //   "typing effect.",
-    //   " ",
-    //   "You typed: ",
-    //   "<em>Streaming<em/>",
-    //   "output ",
-    //   "instead ",
-    //   "of Bubble ",
-    //   "typing effect.",
-    //   " ",
-    //   "You typed: ",
-    //   "<em>Streaming<em/>",
-    //   "output ",
-    //   "\\[3323123123\\]",
-    //   "instead ",
-    //   "of Bubble ",
-    //   "typing effect.",
-    //   " ",
-    //   "You typed: ",
-    //   "<em>Streaming<em/>",
-    //   "output ",
-    //   "instead ",
-    //   "of Bubble ",
-    //   "typing effect.",
-    //   " ",
-    //   "You typed: ",
-    //   message,
-    // ];
-    let currentContent = "";
-
-    for (let chunk of stream) {
-      loading.value = false;
-      await new Promise((r) => setTimeout(r, 120)); // 模拟每块到达的延迟
-      currentContent += chunk;
-      onUpdate(currentContent); // 每次追加新内容
-      console.log(currentContent);
+    if (message) {
+      // const es = new EventSource(
+      //   `http://117.50.218.218:8080/api/chat/stream-chat?message=${encodeURIComponent(
+      //     message
+      //   )}&token=${encodeURIComponent(userStore.token)}`
+      // );
+      // const es = new EventSource(
+      //   `http://localhost:8080/api/chat/stream-chat?message=${encodeURIComponent(
+      //     message
+      //   )}&token=${encodeURIComponent(userStore.token)}`
+      // );
+      const es = new EventSource(
+        `http://localhost:8080/api/chat/stream-chat?message=${encodeURIComponent(
+          message
+        )}&chatId=${encodeURIComponent(
+          userStore.userInfo?.id + "-" + activeKey.value
+        )}&modelId=${encodeURIComponent(modelId.value)}`
+      );
+      es.onmessage = async (event) => {
+        if (event.data === "[END]") {
+          agentRequestLoading.value = false;
+          es.close();
+          return;
+        }
+        loading.value = false;
+        // 2. 每收到一个片段，拼接并onUpdate
+        fullContent += event.data;
+        onUpdate(fullContent);
+        await pushScrollToBottom();
+        console.log(fullContent);
+      };
+      es.onerror = (e) => {
+        es.close();
+        onSuccess(fullContent); // 断线也收尾
+      };
     }
-    agentRequestLoading.value = false;
-    onSuccess(currentContent); // 最终回调
   },
 });
+
+// const sleep = () => new Promise((resolve) => setTimeout(resolve, 500));
+//
+// const [agent] = useXAgent({
+//   request: async ({ message }, { onSuccess, onUpdate }) => {
+//     agentRequestLoading.value = true;
+//     loading.value = true;
+//     onUpdate(" ");
+//     await sleep();
+//     const stream = [
+//       "欧拉公式是数学中一个非常著名且重要的公式，它将复数、指数函数和三角函数紧密联系在一起。欧拉公式的形式为：\n" +
+//         "\n" +
+//         "$$\n" +
+//         "e^{i\\theta} = \\cos\\theta +i\\sin\\theta\n" +
+//         "$$\n" +
+//         "\n" +
+//         "其中：\n" +
+//         "- $e$ 是自然对数的底（约等于 2.71828），\n" +
+//         "- $i$ 是虚数单位，满足 $i^2 =-1$，\n" +
+//         "- $\\theta$是任意实数，通常表示角度（以弧度为单位）。\n" +
+//         "\n" +
+//         "### 欧拉公式的推导\n" +
+//         "欧拉公式的推导基于泰勒级数展开。我们知道以下三个函数的泰勒展开式：\n" +
+//         "1.指数函数：$ e^x = 1+ x + \\frac{x^2}{2!}+ \\frac{x^3}{3!} + \\cdots $\n" +
+//         "2. 正弦函数：$\\sinx = x -\\frac{x^3}{3!} + \\frac{x^5}{5!} -\\cdots$\n" +
+//         "3. 余弦函数：$\\cos x = 1 - \\frac{x^2}{2!} +\\frac{x^4}{4!} - \\cdots$\n" +
+//         "\n" +
+//         "将 $e^{ix}$展开为泰勒级数：\n" +
+//         "$$\n" +
+//         "e^{ix} =1 + ix+ \\frac{(ix)^2}{2!} +\\frac{(ix)^3}{3!} + \\frac{(ix)^4}{4!} + \\cdots\n" +
+//         "$$\n" +
+//         "\n" +
+//         "注意到 $(ix)^n$ 的性质：\n" +
+//         "- 当 $n$ 是偶数时，$(ix)^n =(-1)^{n/2}x^n$（实数部分）。\n" +
+//         "- 当 $n$ 是奇数时，$(ix)^n =(-1)^{(n-1)/2}ix^n$（虚数部分）。\n" +
+//         "\n" +
+//         "因此可以将 $e^{ix}$ 分成实部和虚部：\n" +
+//         "$$\n" +
+//         "e^{ix} = (1- \\frac{x^2}{2!} + \\frac{x^4}{4!}- \\cdots) + i(x- \\frac{x^3}{3!} + \\frac{x^5}{5!}- \\cdots)\n" +
+//         "$$\n" +
+//         "\n" +
+//         "观察发现，实部正好是 $\\cosx$ 的泰勒展开式，虚部正好是$\\sin x$的泰勒展开式。因此我们得到：\n" +
+//         "$$\n" +
+//         "e^{ix}= \\cos x+ i\\sinx\n" +
+//         "$$\n" +
+//         "\n" +
+//         "### 欧拉公式的应用\n" +
+//         "1. **复数的极坐标表示**  \n" +
+//         "  复数$z = a+ bi$可以写成极坐标形式：$z = re^{i\\theta}$，其中 $r = |z|$ 是模长，$\\theta =\\arg(z)$是辐角。\n" +
+//         "\n" +
+//         "2. **三角函数的关系**  \n" +
+//         "  利用欧拉公式，可以推导出三角函数的恒等式。例如：\n" +
+//         "  $$\n" +
+//         "  \\cos\\theta = \\frac{e^{i\\theta} +e^{-i\\theta}}{2}, \\quad \\sin\\theta =\\frac{e^{i\\theta} - e^{-i\\theta}}{2i}\n" +
+//         "  $$\n" +
+//         "\n" +
+//         "3. **特殊值**  \n" +
+//         "  当$\\theta = \\pi$ 时，欧拉公式变为著名的 **欧拉恒等式**：\n" +
+//         "  $$\n" +
+//         "  e^{i\\pi}+ 1 =0\n" +
+//         " $$\n" +
+//         " 这个公式被认为是数学中最美丽的公式之一，因为它将五个重要的数学常数 $e,i, \\pi, 1,0$联系在了一起。\n" +
+//         "\n" +
+//         "4. **信号处理与傅里叶变换**  \n" +
+//         " 欧拉公式在信号处理、傅里叶分析等领域有广泛应用。它使得正弦和余弦波可以用复指数形式表示，从而简化了计算。\n" +
+//         "\n" +
+//         "总结来说，欧拉公式不仅是数学中的瑰宝，还在物理、工程、计算机科学等领域有着深远的影响。",
+//     ];
+//     // 假设你通过 fetch/EventSource 拿到流式片段
+//     // const s =
+//     //   "万有引力公式是由艾萨克·牛顿提出的，用来描述任意两个具有质量的物体之间的引力作用。这个公式是经典力学的重要组成部分，广泛应用于天文学、物理学和工程学等领域。\n" +
+//     //   "\n" +
+//     //   "### 公式表达\n" +
+//     //   "万有引力公式可以表示为：\n" +
+//     //   "$$\n" +
+//     //   "F = G\\cdot \\frac{m_1\\cdot m_2}{r^2}\n" +
+//     //   "$$\n" +
+//     //   "\n" +
+//     //   "其中：\n" +
+//     //   "- $F$ 是两个物体之间的引力大小（单位：牛顿，N）。\n" +
+//     //   "- $ G$ 是万有引力常数，其值约为 $6.674 \\times10^{-11} \\, \\text{N} \\cdot\\text{m}^2 /\\text{kg}^2 $。\n" +
+//     //   "- $ m_1 $ 和$ m_2$ 分别是两个物体的质量（单位：千克，kg）。\n" +
+//     //   "-$ r $ 是两个物体质心之间的距离（单位：米，m）。\n" +
+//     //   "\n" +
+//     //   "---\n" +
+//     //   "\n" +
+//     //   "###物理意义\n" +
+//     //   "1. **引力与质量成正比**：两个物体的质量越大，它们之间的引力越大。\n" +
+//     //   "2.**引力与距离平方成反比**：当两个物体之间的距离增大时，引力会迅速减小。具体来说，如果距离增加到原来的两倍，引力将减少到原来的四分之一。\n" +
+//     //   "3. **普遍适用性**：这个公式适用于任何两个具有质量的物体，无论它们是天体（如行星、恒星）还是日常物品（如苹果和地球）。\n" +
+//     //   "\n" +
+//     //   "---\n" +
+//     //   "\n" +
+//     //   "### 应用举例\n" +
+//     //   "1. **计算天体间的引力**：例如，地球对月球的引力可以通过该公式计算。\n" +
+//     //   "  -地球质量$ m_1= 5.97 \\times10^{24} \\, \\text{kg} $\n" +
+//     //   " - 月球质量 $ m_2 = 7.35 \\times 10^{22}\\, \\text{kg} $\n" +
+//     //   "  - 地球与月球的平均距离 $r = 3.84 \\times 10^8 \\,\\text{m} $\n" +
+//     //   "\n" +
+//     //   " 将这些值代入公式，可以计算出地球对月球的引力。\n" +
+//     //   "\n" +
+//     //   "2. **自由落体运动**：地面上的物体受到的重力也可以看作是地球对该物体的万有引力。在这种情况下，公式可以简化为 $ F =m \\cdot g$，其中 $g $ 是重力加速度。\n" +
+//     //   "\n" +
+//     //   "---\n" +
+//     //   "\n" +
+//     //   "### 注意事项\n" +
+//     //   "- 公式中的 $ r$ 是指两个物体的质心之间的距离。对于不规则形状的物体，需要考虑其质量分布。\n" +
+//     //   "- 在微观尺度下（如原子或亚原子粒子），万有引力的作用非常微弱，通常可以忽略不计，而电磁力或其他基本力起主导作用。\n" +
+//     //   "- 在极端条件下（如黑洞附近），牛顿的万有引力公式不再适用，需要用爱因斯坦的广义相对论来描述引力现象。\n" +
+//     //   "\n" +
+//     //   "希望这个介绍对你有所帮助！如果还有其他问题，请随时提问。";
+//     // const stream = [
+//     //   "余元公式是与**伽马函数**（Gamma 函数）相关的一个重要性质。伽马函数是阶乘的推广，定义为：\n" +
+//     //     "\n" +
+//     //     "$$\n" +
+//     //     "\\Gamma(z) =\\int_0^\\infty t^{z-1} e^{-t} \\, dt, \\quad \\text{其中 }\\Re(z)> 0.\n" +
+//     //     "$$\n" +
+//     //     "\n" +
+//     //     "伽马函数的一个非常重要的性质就是**余元公式**（Reflection Formula），也称为欧拉反射公式（Euler's Reflection Formula）。它的表达式为：\n" +
+//     //     "\n" +
+//     //     "$$\n" +
+//     //     "\\Gamma(z) \\Gamma(1-z) = \\frac{\\pi}{\\sin(\\pi z)}, \\quad z\\notin \\mathbb{Z}.\n" +
+//     //     "$$\n" +
+//     //     "\n" +
+//     //     "###公式的解释\n" +
+//     //     "1. **适用范围**：该公式对所有非整数复数$z$都成立。\n" +
+//     //     "2. **意义**：它将伽马函数在 $z$ 和 $1-z$处的值联系起来，揭示了伽马函数的对称性。\n" +
+//     //     "3. **特殊值**：当$z = \\frac{1}{2}$ 时，代入公式可以得到：\n" +
+//     //     "$$\n" +
+//     //     "\\Gamma\\left(\\frac{1}{2}\\right)\\Gamma\\left(1 - \\frac{1}{2}\\right)= \\Gamma\\left(\\frac{1}{2}\\right)^2 =\\frac{\\pi}{\\sin\\left(\\frac{\\pi}{2}\\right)} = \\pi.\n" +
+//     //     "$$\n" +
+//     //     "  因此，$\\Gamma\\left(\\frac{1}{2}\\right) =\\sqrt{\\pi}$。\n" +
+//     //     "\n" +
+//     //     "###推导思路\n" +
+//     //     "余元公式的推导需要用到复分析中的知识，尤其是**贝塔函数**（BetaFunction）和伽马函数的关系。以下是简要的推导过程：\n" +
+//     //     "\n" +
+//     //     "1. **贝塔函数的定义**：\n" +
+//     //     " 贝塔函数定义为：\n" +
+//     //     "  $$\n" +
+//     //     "  B(x, y)= \\int_0^1 t^{x-1} (1-t)^{y-1} \\,dt, \\quad\\text{其中} \\Re(x), \\Re(y) > 0.\n" +
+//     //     "  $$\n" +
+//     //     "\n" +
+//     //     "2. **贝塔函数与伽马函数的关系**：\n" +
+//     //     " 贝塔函数可以用伽马函数表示为：\n" +
+//     //     "  $$\n" +
+//     //     "  B(x, y) =\\frac{\\Gamma(x) \\Gamma(y)}{\\Gamma(x+y)}.\n" +
+//     //     "  $$\n" +
+//     //     "\n" +
+//     //     "3. **引入正弦函数**：\n" +
+//     //     "  利用复平面上的积分技巧（例如，考虑单位圆上的积分），可以证明：\n" +
+//     //     "  $$\n" +
+//     //     "  B(x, 1-x) = \\int_0^1t^{x-1} (1-t)^{-x} \\, dt= \\frac{\\pi}{\\sin(\\pi x)}.\n" +
+//     //     "  $$\n" +
+//     //     "\n" +
+//     //     "4. **结合伽马函数关系**：\n" +
+//     //     " 将贝塔函数与伽马函数的关系代入上式，得到：\n" +
+//     //     "  $$\n" +
+//     //     " \\frac{\\Gamma(x) \\Gamma(1-x)}{\\Gamma(1)} = \\frac{\\pi}{\\sin(\\pi x)}.\n" +
+//     //     "  $$\n" +
+//     //     "\n" +
+//     //     "  由于$\\Gamma(1) = 1$，最终得到余元公式：\n" +
+//     //     "  $$\n" +
+//     //     " \\Gamma(x)\\Gamma(1-x) = \\frac{\\pi}{\\sin(\\pix)}.\n" +
+//     //     " $$\n" +
+//     //     "\n" +
+//     //     "###应用\n" +
+//     //     "余元公式在数学和物理学中有广泛的应用，例如：\n" +
+//     //     "1. 计算特定值的伽马函数（如 $\\Gamma\\left(\\frac{1}{2}\\right)$）。\n" +
+//     //     "2. 在概率论中处理 Beta分布和 Gamma分布时的计算。\n" +
+//     //     "3.在解析数论中研究 Riemann Zeta函数的性质。\n" +
+//     //     "4. 在量子场论和弦理论中用于正则化技术。\n" +
+//     //     "\n" +
+//     //     "希望这个介绍对你有所帮助！如果有任何问题或需要更详细的推导，请随时提问！",
+//     // ];
+//     // const stream = [
+//     //   "<em>Streaming<em/>",
+//     //   "$123$",
+//     //   "$123123$",
+//     //   "instead ",
+//     //   "$123123$ ",
+//     //   "typing effect.",
+//     //   " ",
+//     //   "You typed: ",
+//     //   "<em>Streaming<em/>",
+//     //   "output ",
+//     //   "instead ",
+//     //   "of Bubble ",
+//     //   "typing effect.",
+//     //   " ",
+//     //   "You typed: ",
+//     //   "<em>Streaming<em/>",
+//     //   "output ",
+//     //   "\\[3323123123\\]",
+//     //   "instead ",
+//     //   "of Bubble ",
+//     //   "typing effect.",
+//     //   " ",
+//     //   "You typed: ",
+//     //   "<em>Streaming<em/>",
+//     //   "output ",
+//     //   "instead ",
+//     //   "of Bubble ",
+//     //   "typing effect.",
+//     //   " ",
+//     //   "You typed: ",
+//     //   message,
+//     // ];
+//     let currentContent = "";
+//
+//     for (let chunk of stream) {
+//       loading.value = false;
+//       await new Promise((r) => setTimeout(r, 120)); // 模拟每块到达的延迟
+//       currentContent += chunk;
+//       onUpdate(currentContent);
+//       await pushScrollToBottom();
+//       console.log(currentContent); // 每次追加新内容
+//     }
+//     agentRequestLoading.value = false;
+//     onSuccess(currentContent); // 最终回调
+//   },
+// });
 const { onRequest, messages, setMessages } = useXChat({
   agent: agent.value,
 });
+
+// watch(messages, (oldVal, newVal) => {
+//   console.log(newVal);
+// });
 
 watch(
   activeKey,
   () => {
     if (activeKey.value !== undefined) {
       setMessages([]);
+      // setMessages([
+      //   {
+      //     id: "msg_0",
+      //     message: "你好",
+      //     status: "ai",
+      //   },
+      // ]);
     }
   },
   { immediate: true }
@@ -935,7 +1038,7 @@ function fixMarkdown(mdStr: string) {
   );
 
   mdStr = mdStr.replace(
-    /\\(sin|cos|tan|log|ln|exp|arcsin|arccos|arctan|sec|csc|cot|cdot|partial)([a-zA-Z0-9])/g,
+    /\\(sin|cos|tan|log|ln|exp|arcsin|arccos|arctan|sec|csc|cot|cdot|partial|triangle|angle)([a-zA-Z0-9])/g,
     "\\$1 $2"
   );
   // mdStr = mdStr.replace(
@@ -955,7 +1058,7 @@ const onPromptsItemClick: PromptsProps["onItemClick"] = (info) => {
   onRequest(info.data.description as string);
 };
 
-function onAddConversation() {
+async function onAddConversation() {
   conversationsItems.value = [
     ...conversationsItems.value,
     {
@@ -965,11 +1068,30 @@ function onAddConversation() {
       icon: h(MessageOutlined),
     },
   ];
-  activeKey.value = `${conversationsItems.value.length}`;
+  activeKey.value = `${conversationsItems.value.length - 1}`;
+  if (!userStore.userInfo?.id) return;
+  await addConversation(userStore.userInfo?.id.toString(), activeKey.value);
+  // alert(activeKey.value);
 }
 
-const onConversationClick: ConversationsProps["onActiveChange"] = (key) => {
+const onConversationClick: ConversationsProps["onActiveChange"] = async (
+  key
+) => {
   activeKey.value = key;
+  const res = await getMessages(userStore.userInfo?.id + "-" + activeKey.value);
+  const allMessages = res.data.data.map((item: any, index: number) => {
+    let status = "local";
+    let id = "msg_" + index;
+    if (item.messageType == "ASSISTANT") status = "ai";
+    return {
+      id: id,
+      message: item.text,
+      status: status,
+    };
+  });
+  setMessages(allMessages);
+  console.log(allMessages);
+  // alert(activeKey.value);
 };
 
 const handleFileChange: AttachmentsProps["onChange"] = (info) =>
@@ -1137,8 +1259,6 @@ const items = computed<BubbleListProps["items"]>(() => {
   // }));
 });
 
-const visible = defineModel<boolean>("visible", { default: false });
-
 const menuConfig: ConversationsProps["menu"] = (conversation) => ({
   items: [
     {
@@ -1164,15 +1284,26 @@ const menuConfig: ConversationsProps["menu"] = (conversation) => ({
   },
 });
 
-watch(
-  () => messages.value.length,
-  async () => {
-    await nextTick();
-    if (scrollArea.value) {
-      scrollArea.value.scrollTop = scrollArea.value.scrollHeight;
-    }
-  }
-);
+// watch(
+//   () => messages.value.length,
+//   async () => {
+//     await nextTick();
+//     if (scrollArea.value) {
+//       alert(1);
+//       scrollArea.value.scrollTop = scrollArea.value.scrollHeight;
+//     }
+//   }
+// );
+
+const pushScrollToBottom = async () => {
+  await nextTick();
+  scrollArea.value!.scrollTop = scrollArea.value!.scrollHeight;
+};
+
+// watch(messages, async (oldVal, newVal) => {
+//   await nextTick();
+//   scrollArea.value!.scrollTop = scrollArea.value!.scrollHeight;
+// });
 </script>
 
 <style scoped>

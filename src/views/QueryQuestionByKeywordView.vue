@@ -37,6 +37,7 @@
             :total="total"
             v-model:page-size="currentPageSize"
             @change="onChange"
+            style="margin-bottom: 30px"
         /></a-col>
       </a-col>
     </a-row>
@@ -55,17 +56,15 @@ import { ref } from "vue";
 import { getQuestionByCombination, QueryParams } from "@/api/question";
 
 import QuestionFilter from "@/components/QuestionFilter.vue";
+import { useAllQuestionsStore } from "@/stores/AllQuestions";
+import { storeToRefs } from "pinia";
 
 const route = useRoute();
-
 const keyword = ref(route.query.kw || "");
-
-const allQuestions = ref([]);
-
+const allQuestionsStore = useAllQuestionsStore();
+const { allQuestions } = storeToRefs(allQuestionsStore);
 const total = ref(0);
-
 let currentPageNumber = ref(1);
-
 let currentPageSize = ref(10);
 
 const combinationLabel = ref<QueryParams>({
