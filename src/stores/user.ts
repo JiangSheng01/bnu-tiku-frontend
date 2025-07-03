@@ -14,6 +14,7 @@ export const useUserStore = defineStore("user", {
     selectedKey: "login",
     email: "",
     conversationIds: ["0"],
+    conversationNames: ["新会话"],
   }),
 
   actions: {

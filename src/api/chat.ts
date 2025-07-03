@@ -10,13 +10,35 @@ export function getMessages(conversationId: string) {
     `/chat/get/messages/${encodeURIComponent(conversationId)}`
   );
 }
-export function addConversation(userId: string, chatId: string) {
-  return request.get(
-    `/chat/add/conversation/${encodeURIComponent(chatId)}/${encodeURIComponent(
-      userId
-    )}`
+
+export function addConversation(
+  userId: string,
+  chatId: string,
+  chatName: string
+) {
+  return request.post(
+    `/chat/add/conversation/${encodeURIComponent(userId)}/${encodeURIComponent(
+      chatId
+    )}/${encodeURIComponent(chatName)}`
   );
 }
-export function getConversations(userId: string) {
-  return request.get(`/chat/get/conversation/${encodeURIComponent(userId)}`);
+
+export function getConversationIds(userId: string) {
+  return request.get(
+    `/chat/get/conversation/ids/${encodeURIComponent(userId)}`
+  );
+}
+
+export function getConversationNames(userId: string) {
+  return request.get(
+    `/chat/get/conversation/names/${encodeURIComponent(userId)}`
+  );
+}
+
+export function deleteConversation(userId: string, chatId: string) {
+  return request.post(
+    `/chat/delete/conversation/${encodeURIComponent(
+      userId
+    )}/${encodeURIComponent(chatId)}`
+  );
 }

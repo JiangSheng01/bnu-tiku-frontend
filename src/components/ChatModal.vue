@@ -36,7 +36,18 @@
           :menu="menuConfig"
           :active-key="activeKey"
           @active-change="onConversationClick"
-        />
+        >
+          <!--          <template #item="{ item }">-->
+          <!--            <a-input-->
+          <!--              v-if="editingKey === item.key"-->
+          <!--              v-model:value="renameText"-->
+          <!--              size="small"-->
+          <!--              @keyup.enter="saveRename(item)"-->
+          <!--              @blur="saveRename(item)"-->
+          <!--            />-->
+          <!--            &lt;!&ndash;            <span v-else>{{ item.label }}</span>&ndash;&gt;-->
+          <!--          </template>-->
+        </Conversations>
 
         <div
           style="
@@ -192,6 +203,12 @@
                     :loading="agentRequestLoading"
                     @submit="onSubmit"
                     @change="(value:string) => (content = value)"
+                    :on-cancel="
+                      () => {
+                        agentRequestLoading = false;
+                        loading = false;
+                      }
+                    "
                   >
                     <template #prefix>
                       <Badge :dot="attachedFiles.length > 0 && !headerOpen">
@@ -299,8 +316,16 @@ import type {
   ConversationsProps,
   PromptsProps,
 } from "ant-design-x-vue";
-import { defineModel, onMounted, reactive, VNode, watchEffect } from "vue";
+import {
+  defineModel,
+  onMounted,
+  reactive,
+  VNode,
+  VNodeChild,
+  watchEffect,
+} from "vue";
 import { defineOptions, nextTick } from "vue";
+import { v4 as uuid } from "uuid";
 import {
   CloudUploadOutlined,
   CommentOutlined,
@@ -332,6 +357,7 @@ import {
   theme,
   message,
   Tooltip,
+  Input,
 } from "ant-design-vue";
 import {
   Attachments,
@@ -351,34 +377,43 @@ import MarkdownIt from "markdown-it";
 import { useUserStore } from "@/stores/user";
 import { storeToRefs } from "pinia";
 import { random } from "lodash";
-import { addConversation, getConversations, getMessages } from "@/api/chat";
+import {
+  addConversation,
+  deleteConversation,
+  getConversationIds,
+  getConversationNames,
+  getMessages,
+} from "@/api/chat";
 import { getCurrentUser, syncUserFromServer } from "@/api/user";
+import { getUUID } from "ant-design-vue/lib/vc-dialog/util";
+import convert from "lodash/fp/convert";
+import { Conversation } from "ant-design-x-vue/typings/conversations/interface";
 // 级联数据结构
 const userStore = useUserStore();
-const { userInfo, conversationIds } = storeToRefs(userStore);
+const { userInfo, conversationIds, conversationNames } = storeToRefs(userStore);
+// {
+//   value: "openai",
+//   label: "OpenAI",
+//   children: [
+//     { value: "gpt-3.5", label: "GPT-3.5" },
+//     { value: "gpt-4o", label: "GPT-4o" },
+//     { value: "gpt-4", label: "GPT-4" },
+//   ],
+// },
+// {
+//   value: "anthropic",
+//   label: "Anthropic",
+//   children: [
+//     { value: "claude-2", label: "Claude 2" },
+//     { value: "claude-3", label: "Claude 3" },
+//   ],
+// },
+// {
+//   value: "deepseek",
+//   label: "Deepseek",
+//   children: [{ value: "deepseek-v3", label: "Deepseek-v3" }],
+// },
 const options = [
-  {
-    value: "openai",
-    label: "OpenAI",
-    children: [
-      { value: "gpt-3.5", label: "GPT-3.5" },
-      { value: "gpt-4o", label: "GPT-4o" },
-      { value: "gpt-4", label: "GPT-4" },
-    ],
-  },
-  {
-    value: "anthropic",
-    label: "Anthropic",
-    children: [
-      { value: "claude-2", label: "Claude 2" },
-      { value: "claude-3", label: "Claude 3" },
-    ],
-  },
-  {
-    value: "deepseek",
-    label: "Deepseek",
-    children: [{ value: "deepseek-v3", label: "Deepseek-v3" }],
-  },
   {
     value: "qwen",
     label: "通义千问",
@@ -535,9 +570,15 @@ function renderTitle(icon: VNode, title: string) {
   return h(Space, { align: "start" }, [icon, h("span", title)]);
 }
 
-const defaultConversationsItems = [
+interface ConversationItem {
+  key: string;
+  label: string | VNode;
+  icon: VNode; // 字符串或 VNode 都行
+}
+
+let defaultConversationsItems = [
   {
-    key: "0",
+    key: uuid(),
     // label: "What is Ant Design X?",
     label: "新会话",
     icon: h(MessageOutlined),
@@ -546,8 +587,10 @@ const defaultConversationsItems = [
 
 const getConversationsIds = async () => {
   if (userStore.userInfo?.id) {
-    const res = await getConversations(userStore.userInfo?.id.toString());
-    conversationIds.value = res.data.data;
+    const ids = await getConversationIds(userStore.userInfo?.id.toString());
+    const names = await getConversationNames(userStore.userInfo?.id.toString());
+    conversationIds.value = ids.data.data;
+    conversationNames.value = names.data.data;
     console.log("userStore is not null:", userStore.userInfo);
   } else {
     console.log("userStore is null");
@@ -555,18 +598,25 @@ const getConversationsIds = async () => {
   }
 
   console.log("conversationIds is:", conversationIds);
+  console.log("conversationNames is:", conversationNames);
 
   if (conversationIds.value.length > 0) {
     conversationsItems.value = conversationIds.value.map((item, index) => {
       return {
         key: item,
-        label: "新会话" + index,
+        label: conversationNames.value[index],
         icon: h(MessageOutlined),
       };
     });
   } else {
     console.log("conversationIds is null, will add id 0");
-    await addConversation(userStore.userInfo?.id.toString(), "0");
+    await addConversation(
+      userStore.userInfo?.id.toString(),
+      defaultConversationsItems[0].key,
+      "新会话"
+    );
+    defaultConversationsItems[0].key = uuid().toString();
+    conversationsItems.value.push(defaultConversationsItems[0]);
     console.log("new conversationIds is:", conversationIds);
   }
 };
@@ -699,7 +749,7 @@ const roles: BubbleListProps["roles"] = {
 // ==================== State ====================
 const headerOpen = ref(false);
 const content = ref("");
-const conversationsItems = ref(defaultConversationsItems);
+const conversationsItems = ref<ConversationItem[]>(defaultConversationsItems);
 const activeKey = ref(defaultConversationsItems[0].key);
 const attachedFiles = ref<AttachmentsProps["items"]>([]);
 const agentRequestLoading = ref(false);
@@ -746,8 +796,14 @@ const [agent] = useXAgent({
         )}&modelId=${encodeURIComponent(modelId.value)}`
       );
       es.onmessage = async (event) => {
+        if (!agentRequestLoading.value) {
+          onSuccess(fullContent);
+          es.close();
+          return;
+        }
         if (event.data === "[END]") {
           agentRequestLoading.value = false;
+          onSuccess(fullContent);
           es.close();
           return;
         }
@@ -755,7 +811,7 @@ const [agent] = useXAgent({
         // 2. 每收到一个片段，拼接并onUpdate
         fullContent += event.data;
         onUpdate(fullContent);
-        await pushScrollToBottom();
+        // await pushScrollToBottom();
         console.log(fullContent);
       };
       es.onerror = (e) => {
@@ -1059,18 +1115,24 @@ const onPromptsItemClick: PromptsProps["onItemClick"] = (info) => {
 };
 
 async function onAddConversation() {
+  const conversationKey = uuid().toString();
   conversationsItems.value = [
     ...conversationsItems.value,
     {
-      key: `${conversationsItems.value.length}`,
+      key: `${conversationKey}`,
       // label: `New Conversation ${conversationsItems.value.length}`,
-      label: `新会话 ${conversationsItems.value.length}`,
+      label: `新会话`,
       icon: h(MessageOutlined),
     },
   ];
-  activeKey.value = `${conversationsItems.value.length - 1}`;
+  // alert(conversationKey);
+  activeKey.value = conversationKey;
   if (!userStore.userInfo?.id) return;
-  await addConversation(userStore.userInfo?.id.toString(), activeKey.value);
+  await addConversation(
+    userStore.userInfo?.id.toString(),
+    conversationKey,
+    "新会话"
+  );
   // alert(activeKey.value);
 }
 
@@ -1259,28 +1321,106 @@ const items = computed<BubbleListProps["items"]>(() => {
   // }));
 });
 
+const editingKey = ref<string | null>(null);
+const renameText = ref("");
+
+function enterEdit(row: Conversation) {
+  editingKey.value = row.key;
+  renameText.value = String(row.label);
+  // alert(editingKey.value);
+  conversationsItems.value = conversationsItems.value.map((c) =>
+    c.key === row.key
+      ? {
+          ...c,
+          label: h(Input, {
+            id: `rename-${c.key}`,
+            size: "small",
+            defaultValue: renameText.value,
+            "onUpdate:value": (val: string) => (renameText.value = val),
+            autofocus: true,
+            style: "width:120px",
+            onInput: (e: any) => (renameText.value = e.target.value),
+            onKeyup: (e: KeyboardEvent) => e.key === "Enter" && saveRename(c),
+            onBlur: () => saveRename(c),
+          }),
+        }
+      : c
+  );
+  // 确保光标拿到焦点
+  nextTick(() => document.getElementById(`rename-${row.key}`)?.focus());
+}
+
+async function saveRename(c: Conversation) {
+  const newName = renameText.value.trim();
+  editingKey.value = null;
+  conversationsItems.value.map((c) => {
+    if (typeof c.label != typeof "string") {
+      c.label = newName;
+    }
+  });
+  if (!newName || newName === c.label) return;
+
+  try {
+    if (!userStore.userInfo?.id) return;
+    await addConversation(userStore.userInfo?.id.toString(), c.key, newName);
+    message.success("重命名成功");
+  } catch {
+    message.error("重命名失败");
+  }
+}
+
 const menuConfig: ConversationsProps["menu"] = (conversation) => ({
   items: [
     {
-      label: "Operation 1",
-      key: "operation1",
+      label: "重命名",
+      key: "rename",
       icon: h(EditOutlined),
     },
     {
-      label: "Operation 2",
-      key: "operation2",
-      icon: h(StopOutlined),
-      disabled: true,
-    },
-    {
-      label: "Operation 3",
-      key: "operation3",
+      label: "删除",
+      key: "delete",
       icon: h(DeleteOutlined),
       danger: true,
     },
   ],
-  onClick: (menuInfo) => {
-    messageApi.info(`Click ${conversation.key} - ${menuInfo.key}`);
+  onClick: async (menuInfo) => {
+    if (menuInfo.key == "delete") {
+      const idx = conversationsItems.value.findIndex(
+        (i) => i.key === conversation.key
+      );
+      if (idx !== -1) {
+        conversationsItems.value.splice(idx, 1); // 同样能触发响应式
+        if (!userStore.userInfo?.id) return;
+        await deleteConversation(
+          userStore.userInfo?.id.toString(),
+          conversation.key
+        );
+      }
+      if (activeKey.value === conversation.key) {
+        activeKey.value = conversationsItems.value[0]?.key ?? "";
+        onConversationClick(activeKey.value);
+      }
+      if (conversationsItems.value.length < 1) {
+        // defaultConversationsItems[0].key = uuid();
+        // conversationsItems.value.push(defaultConversationsItems[0]);
+        await getConversationsIds();
+      }
+      // conversationsItems.value.filter(async (item) => {
+      //   if (item.key == conversation.key) {
+      //     if (userStore.userInfo?.id)
+      //       await deleteConversation(
+      //         userStore.userInfo?.id.toString(),
+      //         conversation.key
+      //       );
+      //     return false;
+      //   }
+      // });
+    }
+    if (menuInfo.key == "rename") {
+      return enterEdit(conversation);
+    }
+    // message.success(`Click ${conversation.key} - ${menuInfo.key}`);
+    // messageApi.info(`Click ${conversation.key} - ${menuInfo.key}`);
   },
 });
 
@@ -1311,14 +1451,12 @@ const pushScrollToBottom = async () => {
   display: flex;
   align-items: center;
   font-size: 1px;
-  height: 140px;
 }
 
 .model-cascader .ant-cascader-menus .ant-cascader-menu {
   /* 你的样式 */
   border-radius: 8px;
   overflow: hidden;
-  height: 260px;
 }
 </style>
 
