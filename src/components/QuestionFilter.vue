@@ -24,6 +24,8 @@
 
 <script setup lang="ts">
 import { reactive } from "vue";
+import { useFilterStore } from "@/stores/filter";
+import { storeToRefs } from "pinia";
 
 const emits = defineEmits(["updateFilter"]);
 
@@ -51,21 +53,23 @@ const filterOptions = {
   },
 };
 
+const filterStore = useFilterStore();
+const { selected } = storeToRefs(filterStore);
 // 选中状态
-const selected = reactive<Record<string, any>>({
-  grade: "全部",
-  type: "全部",
-  difficulty: "全部",
-});
+// const selected = reactive<Record<string, any>>({
+//   grade: "全部",
+//   type: "全部",
+//   difficulty: "全部",
+// });
 
-const selectItem = (groupKey: any, item: any) => {
-  selected[groupKey] = item;
+const selectItem = (groupKey: string, item: string) => {
+  selected.value[groupKey] = item;
   // emit 可选：向父组件发出更新事件
   // emit("update:filter", { ...selected })
   const newSelected = {
-    grade: gradeToId(selected.grade),
-    type: questionTypeToId(selected.type),
-    difficulty: transferDifficulty(selected.difficulty),
+    grade: gradeToId(selected.value.grade),
+    type: questionTypeToId(selected.value.type),
+    difficulty: transferDifficulty(selected.value.difficulty),
   };
   // console.log(newSelected);
   emits("updateFilter", {

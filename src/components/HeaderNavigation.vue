@@ -145,7 +145,7 @@ import {
   SmileTwoTone,
 } from "@ant-design/icons-vue";
 import { useRouter } from "vue-router";
-import { ref } from "vue";
+import { ref, watchEffect } from "vue";
 import UserModal from "@/components/UserModal.vue";
 import ChatModal from "@/components/ChatModal.vue";
 import { useUserStore } from "@/stores/user";
@@ -153,11 +153,13 @@ import { storeToRefs } from "pinia";
 import { message } from "ant-design-vue";
 import { useHeaderViewStore } from "@/stores/HeaderView";
 import { requireLogin } from "@/api/auth";
+import { useFilterStore } from "@/stores/filter";
 const userStore = useUserStore();
 const { token, userInfo, showLogin, selectedKey } = storeToRefs(userStore);
 const showChat = ref(false);
 const router = useRouter();
 const keyword = ref("");
+// const selectedKeys = ref<Array<string>>([]);
 const headerViewStore = useHeaderViewStore();
 const { selectedKeys } = storeToRefs(headerViewStore);
 console.log("header Navigation user info is ");
@@ -179,13 +181,25 @@ const showUserInfo = () => {
   //   console.log(userInfo.value);
   // }
 };
-
+const filterStore = useFilterStore();
+const { selected } = storeToRefs(filterStore);
 function onSearchQuestion() {
   // alert(keyword.value.trim());
+  selected.value = {
+    grade: "全部",
+    type: "全部",
+    difficulty: "全部",
+  };
+  selectedKeys.value = [];
+  if (!keyword.value.trim()) {
+    message.error("关键词为空");
+    return;
+  }
   router.push({
     path: "/search/question/by/keyword",
     query: { kw: keyword.value.trim() },
   });
+  keyword.value = "";
 }
 const logout = () => {
   userStore.logout();
@@ -194,6 +208,14 @@ const logout = () => {
   selectedKeys.value = ["1"];
   message.success("已退出登录！");
 };
+
+watchEffect(() => {
+  if (router.currentRoute.value.path.includes("kp")) {
+    selectedKeys.value = ["2"];
+  } else if (router.currentRoute.value.path.includes("bucket")) {
+    selectedKeys.value = ["3"];
+  }
+});
 </script>
 
 <style scoped>

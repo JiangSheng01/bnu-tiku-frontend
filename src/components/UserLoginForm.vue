@@ -86,9 +86,14 @@ async function onLogin() {
     userName: userName.value,
     userPassword: userPassword.value,
   });
-
+  console.log(res.data);
   if (!(res.data.code == "SUCCESS")) {
-    message.error("登录失败！");
+    if (res.data.code == "PASSWORD_INCORRECT") {
+      message.error("密码错误");
+    }
+    if (res.data.code == "USER_NOT_FOUND") {
+      message.error("用户名不存在");
+    }
     isLogin.value = false;
     return;
   }

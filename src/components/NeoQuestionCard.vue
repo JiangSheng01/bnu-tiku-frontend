@@ -13,6 +13,7 @@
           margin-bottom: 10px;
           box-shadow: 3px 3px 3px rgba(204, 204, 204, 0.5);
         "
+        :key="q.question_id"
       >
         <template #title>
           <div>
@@ -186,14 +187,15 @@ const { questionBasket } = storeToRefs(questionBasketStore);
 const questionCorrectStore = useQuestionCorrectStore();
 const { correctShow, clickedQuestionId, clickedQuestion } =
   storeToRefs(questionCorrectStore);
-const allQuestionsStore = useAllQuestionsStore();
-const { allQuestions } = storeToRefs(allQuestionsStore);
-console.log("question card", allQuestions.value);
+// const allQuestionsStore = useAllQuestionsStore();
+// const { allQuestions } = storeToRefs(allQuestionsStore);
+// console.log(allQuestions.value);
 const props = defineProps<{
   showAddToBasket: {
     type: boolean;
     default: true; // 默认显示按钮
   };
+  allQuestions: any;
   loading: boolean;
   pageType: string;
 }>();
@@ -231,7 +233,7 @@ let { loading } = toRefs(props);
 const showCorrect = async (questionId: any) => {
   correctShow.value = true;
   clickedQuestionId.value = questionId;
-  if (allQuestions.value.length > 1) {
+  if (props.allQuestions.length > 1) {
     const res = await getQuestionsByIds(Array.of(questionId));
     console.log("for correct", res.data);
     clickedQuestion.value = res.data.data[0];

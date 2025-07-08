@@ -340,9 +340,10 @@ watchEffect(() => {
   // alert(correctionContent.value);
 });
 
-watchEffect(() => {
-  if (visible.value == false) {
+watch(visible, (value, oldValue) => {
+  if (value == true) {
     activeTab.value = "stem";
+    correctionContent.value = question.value.stem;
   }
 });
 
@@ -424,7 +425,6 @@ async function handleSubmit() {
     const b = areAllValuesEmpty(correctQuestParams.correctTags);
     if (b) {
       message.error("请修改后再提交");
-
       return;
     }
   }

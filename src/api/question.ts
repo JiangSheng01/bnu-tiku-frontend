@@ -58,6 +58,10 @@ export function getQuestionByCombination(params: QueryParams) {
   return request.post(`/question/search/combination`, params);
 }
 
+export function getQuestionsByIds(ids: any) {
+  return request.post(`/question/search/ids`, ids);
+}
+
 export function exportQuestionByIds(ids: any, format: string) {
   return request.post(`/question/export?format=${format}`, ids, {
     responseType: "blob",

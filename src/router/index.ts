@@ -5,12 +5,12 @@ import {
   useRouter,
 } from "vue-router";
 import HomeView from "../views/HomeView.vue";
-import QueryQuestionByKnowledgeView from "@/views/QueryQuestionByKnowledgeView.vue";
+import QuestionQueryByKnowledgeView from "@/views/QuestionQueryByKnowledgeView.vue";
 import LoginView from "@/views/LoginView.vue";
 import registerView from "@/views/RegisterView.vue";
 import UploadQuestionView from "@/views/UploadQuestionView.vue";
 import QuestionBucketView from "@/views/QuestionBucketView.vue";
-import QueryQuestionByKeywordView from "@/views/QueryQuestionByKeywordView.vue";
+import QuestionQueryByKeywordView from "@/views/QuestionQueryByKeywordView.vue";
 import { isLoggedIn, requireLogin } from "@/api/auth";
 import { useHeaderViewStore } from "@/stores/HeaderView";
 import { storeToRefs } from "pinia";
@@ -25,12 +25,12 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: "/search/question/by/kp",
     name: "SearchQuestionByKp",
-    component: QueryQuestionByKnowledgeView,
+    component: QuestionQueryByKnowledgeView,
   },
   {
     path: "/search/question/by/keyword",
     name: "SearchQuestionByKeyword",
-    component: QueryQuestionByKeywordView,
+    component: QuestionQueryByKeywordView,
   },
   {
     path: "/register",

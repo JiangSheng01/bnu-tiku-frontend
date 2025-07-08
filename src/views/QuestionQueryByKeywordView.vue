@@ -21,6 +21,7 @@
             v-model:all-questions="allQuestions"
             :loading="loading"
             :show-add-to-basket="true"
+            :page-type="'keyword'"
           />
         </a-row>
         <a-col
@@ -58,6 +59,7 @@ import { getQuestionByCombination, QueryParams } from "@/api/question";
 import QuestionFilter from "@/components/QuestionFilter.vue";
 import { useAllQuestionsStore } from "@/stores/AllQuestions";
 import { storeToRefs } from "pinia";
+import { useFilterStore } from "@/stores/filter";
 
 const route = useRoute();
 const keyword = ref(route.query.kw || "");
@@ -78,7 +80,7 @@ const combinationLabel = ref<QueryParams>({
 });
 
 const searchQuestionsByKeyword = async () => {
-  const searchParam = keyword.value.toString().trim();
+  const searchParam = String(keyword.value);
   try {
     combinationLabel.value.keyword = searchParam;
     combinationLabel.value.pageNumber = currentPageNumber.value;
@@ -109,11 +111,18 @@ watch(
     searchQuestionsByKeyword();
   }
 );
+const filterStore = useFilterStore();
+const { selected, label } = storeToRefs(filterStore);
 const receiveLabel = async (data: any) => {
   combinationLabel.value.keyword = keyword.value.toString().trim();
   combinationLabel.value.gradeId = data.selected.grade;
   combinationLabel.value.difficulty = data.selected.difficulty;
   combinationLabel.value.simpleQuestionType = data.selected.type;
+  label.value.grade = data.selected.grade;
+  label.value.difficulty = data.selected.difficulty;
+  label.value.type = data.selected.type;
+  currentPageSize.value = 10;
+  currentPageNumber.value = 1;
   combinationLabel.value.pageNumber = currentPageNumber.value;
   combinationLabel.value.pageSize = currentPageSize.value;
 
@@ -121,6 +130,11 @@ const receiveLabel = async (data: any) => {
 
   const res = await getQuestionByCombination(combinationLabel.value);
   allQuestions.value = res.data.data.questions;
+  allQuestions.value.map((q) => {
+    q.stem = q.stem.replace(/\n/g, "<br>");
+    q.question_answer = q.question_answer.replace(/\n/g, "<br>");
+    q.question_explanation = q.question_explanation.replace(/\n/g, "<br>");
+  });
   total.value = res.data.data.totalCount;
   // alert(combinationLabel.value.grade);
   // message.success("**********");

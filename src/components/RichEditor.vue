@@ -57,6 +57,7 @@ function html2text(html: string) {
 onMounted(() => {
   editor.value!.innerText = html2text(text.value);
   editor.value!.innerHTML = text.value; // 初始黑字
+  applyDiff();
 });
 
 function diffHighlight(newText: string) {

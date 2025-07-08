@@ -41,8 +41,13 @@ import { onBeforeMount } from "vue";
 }
 .header {
   background-color: white;
+  top: 0;
+  position: fixed;
+  width: 100%;
+  z-index: 100;
 }
 .content {
+  margin-top: 60px;
   flex: 1; /* 让内容区自动撑开，把footer推到页面底部 */
   background-color: #e6e6e6;
 }

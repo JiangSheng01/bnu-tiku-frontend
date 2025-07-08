@@ -6,11 +6,12 @@
     ><br />
   </div>
   <div class="question-bucket">
-    <QuestionCard
+    <NeoQuestionCard
       v-if="allQuestions.length > 0"
-      :all-questions="allQuestions"
       :loading="false"
       :show-add-to-basket="false"
+      :page-type="'bucket'"
+      :all-questions="allQuestions"
     />
     <div class="basket-content" v-else>试题篮为空，快去挑选试题吧</div>
   </div>
@@ -29,27 +30,44 @@
         :loading="downloading"
         >导出为 Word</a-button
       >
-      <a-button
-        class="download-pdf-button"
-        type="primary"
-        @click="$emit('export', 'pdf')"
-        >导出为 PDF</a-button
-      >
+      <!--      <a-button-->
+      <!--        class="download-pdf-button"-->
+      <!--        type="primary"-->
+      <!--        @click="$emit('export', 'pdf')"-->
+      <!--        >导出为 PDF</a-button-->
+      <!--      >-->
     </div>
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts" async>
 import QuestionCard from "@/components/QuestionCard.vue";
-import { computed, ref, toRefs, watchEffect } from "vue";
+import { onBeforeMount, onMounted, ref, toRefs } from "vue";
 import { useQuestionBasketStore } from "@/stores/questionBasket";
 import { message } from "ant-design-vue";
-import { exportQuestionByIds } from "@/api/question";
-
+import { exportQuestionByIds, getQuestionsByIds } from "@/api/question";
+import { storeToRefs } from "pinia";
+import { useAllQuestionsStore } from "@/stores/AllQuestions";
+import { syncUserFromServer } from "@/api/user";
+import NeoQuestionCard from "@/components/NeoQuestionCard.vue";
+const allQuestionIds = ref<number[]>([]);
+const allQuestions = ref<any>([]);
 const maxCount = ref(20);
 const { questionBasket } = toRefs(useQuestionBasketStore());
 const downloading = ref(false);
-const allQuestions = ref(Array.from(questionBasket.value.values()));
+allQuestionIds.value = Array.from(questionBasket.value.values());
+onMounted(async () => {
+  const res = await getQuestionsByIds(allQuestionIds.value);
+  allQuestions.value = res.data.data;
+  allQuestions.value.map((q) => {
+    q.stem = q.stem.replace(/\n/g, "<br>");
+    q.question_answer = q.question_answer.replace(/\n/g, "<br>");
+    q.question_explanation = q.question_explanation.replace(/\n/g, "<br>");
+  });
+  console.log("getQuestionsByIds", allQuestions.value);
+});
+
+console.log("bucket:", allQuestions.value);
 const clearAll = () => {
   questionBasket.value.clear();
   allQuestions.value = [];
@@ -59,7 +77,7 @@ const clearAll = () => {
 const exportAsWord = async () => {
   downloading.value = true;
   const allQuestionIds = allQuestions.value.map(
-    (question) => question.question_id
+    (question: any) => question.question_id
   );
   exportQuestionByIds(allQuestionIds, "docx")
     .then((res) => {
@@ -84,10 +102,10 @@ const exportAsWord = async () => {
 
 <style scoped>
 .question-bucket {
-  margin-top: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-bottom: 100px;
 }
 .basket-footer {
   position: fixed;

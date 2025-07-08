@@ -8,8 +8,6 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
-
 // 接收父组件传值或自己管理状态
 const props = defineProps({
   count: {

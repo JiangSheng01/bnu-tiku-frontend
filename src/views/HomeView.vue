@@ -108,7 +108,7 @@ function onSearch(value: string) {
 // alert(userStore.userInfo?.userAccount);
 function enterSelectPage() {
   router.push({ path: "/search/question/by/kp" });
-  alert(userStore.userInfo?.userAccount);
+  // alert(userStore.userInfo?.userAccount);
 }
 
 function registerShow() {

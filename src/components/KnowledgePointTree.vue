@@ -75,6 +75,8 @@ import axios, { CancelTokenSource } from "axios";
 import { defineEmits } from "vue";
 import { getQuestionByCombination, QueryParams } from "@/api/question";
 import { getKp } from "@/api/knowledge";
+import { useFilterStore } from "@/stores/filter";
+import { storeToRefs } from "pinia";
 let searchBoxText = ref("");
 let selectedKeys = ref([]);
 let searchResult = ref();
@@ -104,6 +106,8 @@ const combinationLabel = ref<QueryParams>({
   pageSize: 10,
 });
 const emit = defineEmits(["send"]);
+const filterStore = useFilterStore();
+const { selected, label } = storeToRefs(filterStore);
 const onSelect = async (selectedKeys: any, info: any) => {
   emit("send", { resultData: null, selectedKey: null, loading: true });
   if (!info.selected) {
@@ -113,6 +117,9 @@ const onSelect = async (selectedKeys: any, info: any) => {
   const kpName = info.node.title;
   try {
     combinationLabel.value.knowledgePointName = kpName;
+    combinationLabel.value.gradeId = label.value.grade;
+    combinationLabel.value.simpleQuestionType = label.value.type;
+    combinationLabel.value.difficulty = label.value.difficulty;
     const res = await getQuestionByCombination(combinationLabel.value);
     console.log(`📘 查询知识点「${kpName}」返回结果:`, res.data);
     emit("send", {
@@ -180,6 +187,11 @@ const onSearchQuestion = async (name: string) => {
       selectedKey: kpName,
       loading: false,
     });
+    selected.value = {
+      grade: "全部",
+      type: "全部",
+      difficulty: "全部",
+    };
   } catch (err) {
     console.error("❌ 查询失败:", err);
     emit("send", { resultData: null, selectedKey: null, loading: false });

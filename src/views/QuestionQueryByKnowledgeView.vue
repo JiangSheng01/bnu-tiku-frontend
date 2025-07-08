@@ -60,15 +60,12 @@
 <script setup lang="ts">
 import KnowledgePointTree from "@/components/KnowledgePointTree.vue";
 import { onMounted, ref } from "vue";
-
-import axios from "axios";
 import QuestionCard from "@/components/QuestionCard.vue";
 import { getQuestionByCombination, QueryParams } from "@/api/question";
 import QuestionFilter from "@/components/QuestionFilter.vue";
-import BasketButton from "@/components/BasketButton.vue";
-import { message } from "ant-design-vue";
 import { useAllQuestionsStore } from "@/stores/AllQuestions";
 import { storeToRefs } from "pinia";
+import { useFilterStore } from "@/stores/filter";
 const allQuestionsStore = useAllQuestionsStore();
 const { allQuestions } = storeToRefs(allQuestionsStore);
 const currentPageNumber = ref<number>(1);
@@ -87,12 +84,20 @@ const total = ref(0);
 const loading = ref(true);
 
 // 模拟“加入试题篮”操作
-
+const filterStore = useFilterStore();
+const { selected, label } = storeToRefs(filterStore);
 onMounted(() => {
-  const res = getQuestionByCombination(combinationLabel.value)
+  combinationLabel.value.gradeId = label.value.grade;
+  combinationLabel.value.difficulty = label.value.difficulty;
+  combinationLabel.value.simpleQuestionType = label.value.type;
+  getQuestionByCombination(combinationLabel.value)
     .then((res) => {
       allQuestions.value = res.data.data.questions;
-
+      allQuestions.value.map((q) => {
+        q.stem = q.stem.replace(/\n/g, "<br>");
+        q.question_answer = q.question_answer.replace(/\n/g, "<br>");
+        q.question_explanation = q.question_explanation.replace(/\n/g, "<br>");
+      });
       total.value = res.data.data.totalCount;
     })
     .finally(() => {
@@ -103,19 +108,29 @@ onMounted(() => {
 const receiveData = (data: any) => {
   if (data.resultData != null && data.selectedKey != null) {
     allQuestions.value = data.resultData.questions;
+    allQuestions.value.map((q) => {
+      q.stem = q.stem.replace(/\n/g, "<br>");
+      q.question_answer = q.question_answer.replace(/\n/g, "<br>");
+      q.question_explanation = q.question_explanation.replace(/\n/g, "<br>");
+    });
     selectedKp.value = data.selectedKey;
     total.value = data.resultData.totalCount;
   }
-
+  currentPageNumber.value = 1;
+  currentPageSize.value = 10;
   loading.value = data.loading;
 };
-
 const receiveLabel = async (data: any) => {
   loading.value = true;
   combinationLabel.value.knowledgePointName = selectedKp.value;
   combinationLabel.value.gradeId = data.selected.grade;
   combinationLabel.value.difficulty = data.selected.difficulty;
   combinationLabel.value.simpleQuestionType = data.selected.type;
+  label.value.grade = data.selected.grade;
+  label.value.difficulty = data.selected.difficulty;
+  label.value.type = data.selected.type;
+  currentPageSize.value = 10;
+  currentPageNumber.value = 1;
   combinationLabel.value.pageNumber = currentPageNumber.value;
   combinationLabel.value.pageSize = currentPageSize.value;
   console.log(combinationLabel.value);
@@ -123,6 +138,11 @@ const receiveLabel = async (data: any) => {
   const res = await getQuestionByCombination(combinationLabel.value);
 
   allQuestions.value = res.data.data.questions;
+  allQuestions.value.map((q) => {
+    q.stem = q.stem.replace(/\n/g, "<br>");
+    q.question_answer = q.question_answer.replace(/\n/g, "<br>");
+    q.question_explanation = q.question_explanation.replace(/\n/g, "<br>");
+  });
   total.value = res.data.data.totalCount;
   loading.value = false;
   // alert(combinationLabel.value.grade);
@@ -144,19 +164,20 @@ const receiveLabel = async (data: any) => {
 
 const onChange = async (pageNumber: number) => {
   loading.value = true;
-
+  combinationLabel.value.knowledgePointName = selectedKp.value;
   combinationLabel.value.pageNumber = pageNumber;
-
   combinationLabel.value.pageSize = currentPageSize.value;
 
   const res = await getQuestionByCombination(combinationLabel.value);
 
   allQuestions.value = res.data.data.questions;
-
+  allQuestions.value.map((q) => {
+    q.stem = q.stem.replace(/\n/g, "<br>");
+    q.question_answer = q.question_answer.replace(/\n/g, "<br>");
+    q.question_explanation = q.question_explanation.replace(/\n/g, "<br>");
+  });
   total.value = res.data.data.totalCount;
-
   loading.value = false;
-
   console.log(allQuestions.value);
 };
 </script>

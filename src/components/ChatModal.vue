@@ -610,13 +610,14 @@ const getConversationsIds = async () => {
     });
   } else {
     console.log("conversationIds is null, will add id 0");
-    await addConversation(
-      userStore.userInfo?.id.toString(),
-      defaultConversationsItems[0].key,
-      "新会话"
-    );
-    defaultConversationsItems[0].key = uuid().toString();
-    conversationsItems.value.push(defaultConversationsItems[0]);
+    const key = uuid();
+    await addConversation(userStore.userInfo?.id.toString(), key, "新会话");
+    activeKey.value = key;
+    conversationsItems.value.push({
+      key: key,
+      label: "新会话",
+      icon: h(MessageOutlined),
+    });
     console.log("new conversationIds is:", conversationIds);
   }
 };
@@ -789,7 +790,7 @@ const [agent] = useXAgent({
       //   )}&token=${encodeURIComponent(userStore.token)}`
       // );
       const es = new EventSource(
-        `http://localhost:8080/api/chat/stream-chat?message=${encodeURIComponent(
+        `http://117.50.218.218:8080/api/chat/stream-chat?message=${encodeURIComponent(
           message
         )}&chatId=${encodeURIComponent(
           userStore.userInfo?.id + "-" + activeKey.value
