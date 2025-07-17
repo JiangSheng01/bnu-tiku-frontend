@@ -10,6 +10,7 @@
   "dependencies": {
     "@iktakahiro/markdown-it-katex": "^4.0.1",
     "@mdit/plugin-katex": "^0.18.0",
+    "@wiris/mathtype-generic": "^8.13.3",
     "ant-design-vue": "^4.0.0-rc.6",
     "ant-design-x-vue": "^1.2.1",
     "axios": "^1.8.4",

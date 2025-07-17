@@ -27,6 +27,8 @@
           ><b> 对比修改：</b>
         </div>
         <rich-editor
+          ref="richEditorRef"
+          :key="editorKey"
           :text="correctionContent"
           @send-corrections="recieveCorrection"
         />
@@ -47,6 +49,8 @@
           ><b> 对比修改：</b>
         </div>
         <rich-editor
+          ref="richEditorRef"
+          :key="editorKey"
           :text="correctionContent"
           @send-corrections="recieveCorrection"
         />
@@ -67,6 +71,8 @@
           ><b> 对比修改：</b>
         </div>
         <rich-editor
+          ref="richEditorRef"
+          :key="editorKey"
           :text="correctionContent"
           @send-corrections="recieveCorrection"
         />
@@ -312,6 +318,8 @@ const filter = (inputValue: string, path: Option[]) => {
       option.label.toLowerCase().indexOf(inputValue.toLowerCase()) > -1
   );
 };
+const editorKey = ref(0);
+const richEditorRef = ref();
 
 function areAllValuesEmpty(obj: any): boolean {
   // Object.values(obj).every((value) => alert(value));
@@ -319,11 +327,11 @@ function areAllValuesEmpty(obj: any): boolean {
 }
 
 watchEffect(() => {
-  // alert(oldValue);
-  // alert(cascaderValue.value);
-  if (question.value == null) {
+  // 只有在弹窗打开且题目数据有效时才初始化
+  if (question.value == null || !visible.value) {
     return;
   }
+
   if (activeTab.value === "stem") {
     correctionContent.value = question.value.stem;
   } else if (activeTab.value === "answer") {
@@ -337,29 +345,165 @@ watchEffect(() => {
     correctionQuestionType.value = question.value.simple_question_type;
     cascaderValue.value = question.value.knowledge_point;
   }
-  // alert(correctionContent.value);
 });
 
+// 在 watch visible 中更新 key
 watch(visible, (value, oldValue) => {
   if (value == true) {
+    // 弹窗打开时，重置所有编辑内容为原始值
     activeTab.value = "stem";
     correctionContent.value = question.value.stem;
+
+    // 重置标签编辑内容为原始值
+    correctionSource.value = question.value.question_source;
+    correctionDifficulty.value = question.value.difficulty;
+    correctionGrade.value = question.value.grade;
+    correctionQuestionType.value = question.value.simple_question_type;
+    cascaderValue.value = question.value.knowledge_point;
+
+    // 强制重新渲染编辑器
+    editorKey.value++;
+  } else if (value == false) {
+    // 弹窗关闭时，先关闭 MathType 弹窗
+    closeMathTypeModal();
+
+    // 清空所有编辑内容
+    correctionContent.value = "";
+    correctionSource.value = "";
+    correctionDifficulty.value = null;
+    correctionGrade.value = "";
+    correctionQuestionType.value = null;
+    cascaderValue.value = "";
+    lastKnowledgePoint.value = "";
+
+    // 重置选中的下拉菜单项
+    selectedGradeKeys.value = [];
+    selectedDifficultyKeys.value = [];
+    selectedQuestionTypeKeys.value = "";
   }
 });
 
+function closeMathTypeModal() {
+  try {
+    // 步骤 1: 查找主编辑器的“取消”按钮
+    // 这个按钮是关闭流程的入口
+    const cancelBtn = document.querySelector(
+      '[data-testid="mtcteditor-cancel-button"], [id^="wrs_modal_button_cancel"]'
+    );
+
+    // 如果找到了“取消”按钮，说明 MathType 编辑器是打开的
+    if (cancelBtn) {
+      (cancelBtn as HTMLElement).click();
+
+      // 步骤 2: 轮询查找并点击二次确认弹窗的“关闭”按钮
+      // 使用轮询（而不是固定延时）来应对不同情况下的弹窗延迟
+      let attempts = 0;
+      const maxAttempts = 20; // 最多尝试 20 次 (总共 1 秒)
+      const interval = setInterval(() => {
+        attempts++;
+        // 这个是二次确认弹窗中，表示“放弃修改并关闭”的按钮
+        const confirmCloseButton = document.querySelector(
+          '#wrs_popup_accept_button, [data-testid="mtcteditor-cd-close-button"]'
+        );
+
+        if (confirmCloseButton) {
+          // 找到了就点击它，并停止轮询
+          try {
+            (confirmCloseButton as HTMLElement).click();
+          } catch {
+            /* 静默处理 */
+          }
+          clearInterval(interval);
+          // 成功关闭后，执行最终的清理
+          cleanupRemainingMathTypeModals();
+        } else if (attempts >= maxAttempts) {
+          // 如果超时了还没找到，说明可能没有二次确认弹窗，或者弹窗结构变了
+          clearInterval(interval);
+          // 同样执行最终的清理
+          cleanupRemainingMathTypeModals();
+        }
+      }, 50); // 每 50 毫秒检查一次
+    } else {
+      // 如果一开始就没找到 MathType 编辑器，也执行一次清理以防万一
+      cleanupRemainingMathTypeModals();
+    }
+  } catch (error) {
+    console.warn("关闭 MathType 弹窗时发生初始错误:", error);
+    // 即使最开始就出错，也要尝试清理
+    cleanupRemainingMathTypeModals();
+  }
+}
+
+// 独立的最终清理函数，确保所有残留的 MathType 元素都被移除
+function cleanupRemainingMathTypeModals() {
+  // 延迟一小段时间，确保所有点击事件和关闭动画完成
+  setTimeout(() => {
+    // 查找所有可能由 MathType 创建的顶层元素
+    document
+      .querySelectorAll(
+        '.wrs_modal, .wrs_modal_dialogContainer, [class*="wrs_popup"], [data-title="MathType"], [data-title="ChemType"]'
+      )
+      .forEach((el) => {
+        try {
+          // 从 DOM 中安全地移除
+          el.remove();
+        } catch {
+          /* 静默处理 */
+        }
+      });
+  }, 150);
+}
+
 watchEffect(() => {
-  // const x = "1,2,3";
-  // var strings = x.split("1");
+  // 只有在弹窗打开且知识点有值时才处理
+  if (!visible.value || !cascaderValue.value) {
+    return;
+  }
+
   const knowledgePoints = cascaderValue.value.toString();
-
   const knowledgeArray = knowledgePoints.split(",");
-
   lastKnowledgePoint.value = knowledgeArray[knowledgeArray.length - 1];
 });
 
+// 内容标准化函数
+function normalizeContent(content: string): string {
+  if (!content) return "";
+
+  // 创建临时 div 来处理 HTML
+  const tempDiv = document.createElement("div");
+  tempDiv.innerHTML = content;
+
+  // 移除所有 HTML 标签，只保留纯文本
+  let normalized = tempDiv.innerText || tempDiv.textContent || "";
+
+  // 移除多余的空白字符
+  normalized = normalized.replace(/\s+/g, " ").trim();
+
+  return normalized;
+}
+
+// 检查内容变化的函数
+function checkContentChanges(
+  original: string,
+  modified: string | null
+): boolean {
+  if (!modified) return false;
+
+  // 标准化内容进行比较
+  const normalizedOriginal = normalizeContent(original);
+  const normalizedModified = normalizeContent(modified);
+
+  // 如果纯文本内容不同，说明有变化
+  if (normalizedOriginal !== normalizedModified) {
+    return true;
+  }
+
+  // 如果纯文本相同，再检查公式变化
+  return checkFormulaChanges(original, modified);
+}
+
+// 修改 handleSubmit 函数
 async function handleSubmit() {
-  // 这里收集到纠错内容和纠错类型
-  // alert(activeTab.value);
   const correctQuestParams: CorrectParams = {
     userId: 1,
     correctType: activeTab.value,
@@ -392,31 +536,18 @@ async function handleSubmit() {
           }
         : null,
   };
-  // alert(correctQuestParams.correctType);
-  // alert(correctQuestParams.correction);
+
+  // 检查是否有内容变化的逻辑
   if (correctQuestParams.correctType != "tags") {
-    if (
-      correctQuestParams.correctType == "stem" &&
-      correctQuestParams.correction == question.value.stem
-    ) {
-      message.error("请修改后再提交");
-      return;
-    }
+    const originalContent = getOriginalContent();
+    const hasContentChanges = checkContentChanges(
+      originalContent,
+      correctQuestParams.correction
+    );
 
-    if (
-      correctQuestParams.correctType == "answer" &&
-      correctQuestParams.correction == question.value.question_answer
-    ) {
+    // 如果没有任何变化，则不允许提交
+    if (!hasContentChanges) {
       message.error("请修改后再提交");
-      return;
-    }
-
-    if (
-      correctQuestParams.correctType == "answer" &&
-      correctQuestParams.correction == question.value.question_explanation
-    ) {
-      message.error("请修改后再提交");
-
       return;
     }
   } else {
@@ -428,17 +559,78 @@ async function handleSubmit() {
       return;
     }
   }
+
   // 发送接口
-  // await api.submitCorrection(data)
   const res = await correctQuestionById(correctQuestParams);
   visible.value = false;
-  correctionContent.value = "";
 
   if (res.data.code == "SUCCESS") {
     message.success("修改已提交");
   } else {
     message.error("修改失败");
   }
+}
+
+// 获取原始内容的辅助函数
+function getOriginalContent(): string {
+  if (activeTab.value === "stem") {
+    return question.value.stem;
+  } else if (activeTab.value === "answer") {
+    return question.value.question_answer;
+  } else if (activeTab.value === "explanation") {
+    return question.value.question_explanation;
+  }
+  return "";
+}
+
+// 检查公式变化的函数
+function checkFormulaChanges(
+  original: string,
+  modified: string | null
+): boolean {
+  if (!modified) return false;
+
+  // 提取原始内容中的数学公式
+  const originalFormulas = extractMathFormulas(original);
+  const modifiedFormulas = extractMathFormulas(modified);
+
+  // 比较公式数量
+  if (originalFormulas.length !== modifiedFormulas.length) {
+    return true;
+  }
+
+  // 比较每个公式的内容
+  for (let i = 0; i < originalFormulas.length; i++) {
+    if (originalFormulas[i] !== modifiedFormulas[i]) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+// 提取数学公式的函数
+function extractMathFormulas(content: string): string[] {
+  const formulas: string[] = [];
+
+  // 提取 MathML 标签
+  const mathmlRegex = /<math[^>]*>[\s\S]*?<\/math>/gi;
+  const mathmlMatches = content.match(mathmlRegex);
+  if (mathmlMatches) {
+    formulas.push(...mathmlMatches);
+  }
+
+  // 提取 MathType 图片 (data-mathml 属性)
+  const imgRegex =
+    /<img[^>]*class="Wirisformula"[^>]*data-mathml="([^"]*)"[^>]*>/gi;
+  let match;
+  while ((match = imgRegex.exec(content)) !== null) {
+    // 解码 data-mathml 属性中的公式
+    const decodedMathml = match[1].replace(/«/g, "<").replace(/»/g, ">");
+    formulas.push(decodedMathml);
+  }
+
+  return formulas;
 }
 
 function handleGradeMenuClick(info: any) {

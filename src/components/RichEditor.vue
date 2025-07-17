@@ -1,5 +1,7 @@
 <template>
   <div class="rich-editor-container">
+    <!-- MathType 工具栏 -->
+    <div id="mathtype-toolbar" class="mathtype-toolbar"></div>
     <!-- 编辑框，用内容可控的 input 或 contenteditable 实现 -->
     <div
       ref="editor"
@@ -20,11 +22,25 @@ import {
   computed,
   defineProps,
   onMounted,
+  onUnmounted,
   ref,
   toRefs,
   watchEffect,
 } from "vue";
 import DiffMatchPatch from "diff-match-patch";
+
+// 动态导入 MathType
+const loadMathType = async () => {
+  // 动态加载 MathType 脚本
+  if (typeof window !== "undefined" && !(window as any).WirisPlugin) {
+    try {
+      await import("@wiris/mathtype-generic/wirisplugin-generic");
+    } catch (error) {
+      console.error("Failed to load MathType:", error);
+    }
+  }
+};
+
 const props = defineProps<{
   text: string;
 }>();
@@ -32,14 +48,11 @@ let index = 0;
 let { text } = toRefs(props);
 // text.value = "1";
 const history: string[] = [text.value];
-// console.log(origin.value.text);
-// watchEffect(() => {
-//   console.log(origin.value.text);
-// });
 
 const editor = ref<HTMLElement>();
 const dmp = new DiffMatchPatch();
 const isComposing = ref(false);
+let mathTypeInstance: any = null;
 
 // alert(originHtml);
 // 纯文本（标签→占位或删除）
@@ -54,11 +67,101 @@ function html2text(html: string) {
   return tmp.innerText;
 }
 
-onMounted(() => {
+onMounted(async () => {
+  // 加载 MathType
+  await loadMathType();
+
+  // 初始化编辑器内容
   editor.value!.innerText = html2text(text.value);
-  editor.value!.innerHTML = text.value; // 初始黑字
+
+  // 解析 MathML 为图片显示
+  if (window.WirisPlugin && window.WirisPlugin.Parser) {
+    editor.value!.innerHTML = window.WirisPlugin.Parser.initParse(text.value);
+  } else {
+    editor.value!.innerHTML = text.value;
+  }
+
+  // 初始化 MathType 集成
+  initMathType();
+
   applyDiff();
 });
+
+// 在 onUnmounted 中添加清理
+onUnmounted(() => {
+  // 清理 MathType 实例
+  if (mathTypeInstance) {
+    try {
+      if (
+        mathTypeInstance.modalDialog &&
+        typeof mathTypeInstance.modalDialog.close === "function"
+      ) {
+        mathTypeInstance.modalDialog.close();
+      }
+    } catch (error) {
+      console.warn("清理 MathType 实例时出错:", error);
+    }
+  }
+
+  // 清理所有 MathType 相关的 DOM 元素
+  const mathTypeElements = document.querySelectorAll(
+    ".wrs_modal, [data-title='MathType'], [data-title='ChemType']"
+  );
+  mathTypeElements.forEach((element) => {
+    element.remove();
+  });
+});
+
+// 添加一个暴露给父组件的方法来关闭 MathType 弹窗
+const closeMathType = () => {
+  if (mathTypeInstance && mathTypeInstance.modalDialog) {
+    try {
+      mathTypeInstance.modalDialog.close();
+    } catch (error) {
+      console.warn("关闭 MathType 弹窗失败:", error);
+    }
+  }
+};
+
+// 暴露方法给父组件
+defineExpose({
+  closeMathType,
+});
+
+// 初始化 MathType
+const initMathType = () => {
+  if (!window.WirisPlugin || !editor.value) return;
+
+  try {
+    const toolbarDiv = document.getElementById("mathtype-toolbar");
+
+    // 使用 GenericIntegration
+    const genericIntegrationProperties = {
+      target: editor.value,
+      toolbar: toolbarDiv,
+      integrationParameters: {
+        editorParameters: {
+          language: "zh",
+          // 确保公式样式与页面一致
+          fontFamily: "Arial, sans-serif",
+          fontSize: "16px",
+        },
+      },
+    };
+
+    mathTypeInstance = new window.WirisPlugin.GenericIntegration(
+      genericIntegrationProperties
+    );
+    mathTypeInstance.init();
+    mathTypeInstance.listeners.fire("onTargetReady", {});
+
+    window.WirisPlugin.currentInstance = mathTypeInstance;
+
+    console.log("MathType initialized successfully");
+  } catch (error) {
+    console.error("Failed to initialize MathType:", error);
+  }
+};
 
 function diffHighlight(newText: string) {
   const diffs = dmp.diff_main(html2text(text.value), newText);
@@ -190,23 +293,66 @@ function restoreTags(diffHtml: string, currentHtml: string) {
 }
 
 const emit = defineEmits(["sendCorrections"]);
-// text.value = "123";
+
 function computeFinalText() {
-  // text.value = "123";
-  // alert(text.value);
-  // alert(editor.value!.innerHTML);
-  // alert(text.value == editor.value!.innerHTML);
+  if (!editor.value) return; // 防止 editor 为 null
+  let finalContent = editor.value.innerHTML
+    .replace(/<span\b[^>]*>/gi, "")
+    .replace(/<\/span>/gi, "");
+
+  // 将 MathType 图片转换回 MathML
+  if (window.WirisPlugin && window.WirisPlugin.Parser) {
+    finalContent = window.WirisPlugin.Parser.endParse(finalContent);
+  }
+
   emit("sendCorrections", {
-    correction: editor
-      .value!.innerHTML.replace(/<span\b[^>]*>/gi, "")
-      .replace(/<\/span>/gi, ""),
+    correction: finalContent,
   });
 }
 </script>
 
 <style scoped>
 .rich-editor-container {
-  max-height: 250px;
+  max-height: 300px;
   overflow: auto;
+}
+
+.mathtype-toolbar {
+  border: 1px solid #ccc;
+  border-bottom: none;
+  padding: 8px;
+  background-color: #f5f5f5;
+  border-radius: 4px 4px 0 0;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.diff-edit-box {
+  border-radius: 0 0 4px 4px !important;
+}
+
+/* MathType 按钮样式 */
+:deep(.wrs_toolbar) {
+  display: flex;
+  gap: 8px;
+}
+
+:deep(.wrs_toolbar img) {
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 3px;
+  transition: background-color 0.2s;
+}
+
+:deep(.wrs_toolbar img:hover) {
+  background-color: #e6f7ff;
+}
+
+/* 确保数学公式的样式与页面一致 */
+:deep(.Wirisformula) {
+  vertical-align: middle;
+  max-width: none;
 }
 </style>
