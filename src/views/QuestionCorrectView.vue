@@ -18,7 +18,7 @@
         <b>题干内容：</b>
         <div class="divider"></div>
         <div class="question-content">
-          <div v-katex>{{ question.stem }}</div>
+          <rich-editor :text="question.stem" :readonly="true" />
         </div>
         <div style="margin: 12px 0 16px 0">
           <div class="divider"></div>
@@ -40,7 +40,7 @@
         <b>答案内容：</b>
         <div class="divider"></div>
         <div class="question-content">
-          <div v-katex>{{ question.question_answer }}</div>
+          <rich-editor :text="question.question_answer" :readonly="true" />
         </div>
         <div style="margin: 12px 0 16px 0">
           <div class="divider"></div>
@@ -62,7 +62,7 @@
         <b>解析内容：</b>
         <div class="divider"></div>
         <div class="question-content">
-          <div v-katex>{{ question.question_explanation }}</div>
+          <rich-editor :text="question.question_explanation" :readonly="true" />
         </div>
         <div style="margin: 12px 0 16px 0">
           <div class="divider"></div>
@@ -438,10 +438,10 @@ function closeMathTypeModal() {
 function cleanupRemainingMathTypeModals() {
   // 延迟一小段时间，确保所有点击事件和关闭动画完成
   setTimeout(() => {
-    // 查找所有可能由 MathType 创建的顶层元素
+    // 查找所有可能由 MathType 创建的顶层元素，包括离线弹窗
     document
       .querySelectorAll(
-        '.wrs_modal, .wrs_modal_dialogContainer, [class*="wrs_popup"], [data-title="MathType"], [data-title="ChemType"]'
+        '#wrs_modal_offline, .wrs_modal, .wrs_modal_dialogContainer, .wrs_modal_offline, .wrs_modal_content_offline, .wrs_modal_offline_close, [class*="wrs_popup"], [data-title="MathType"], [data-title="ChemType"]'
       )
       .forEach((el) => {
         try {
@@ -469,14 +469,34 @@ watchEffect(() => {
 function normalizeContent(content: string): string {
   if (!content) return "";
 
-  // 创建临时 div 来处理 HTML
+  // 1. 先统一处理换行符，将 <br> 和 <br/> 转换为空格
+  content = content.replace(/<br\s*\/?>/gi, " ");
+
+  // 2. 去掉 LaTeX 注释
+  content = content.replace(/<annotation[^>]*>[\s\S]*?<\/annotation>/gi, "");
+
+  // 3. 创建临时 div 来处理 HTML
   const tempDiv = document.createElement("div");
   tempDiv.innerHTML = content;
 
-  // 移除所有 HTML 标签，只保留纯文本
+  // 4. 移除所有 HTML 标签，只保留纯文本
   let normalized = tempDiv.innerText || tempDiv.textContent || "";
 
-  // 移除多余的空白字符
+  // 5. 统一处理空白字符：
+  // - 将连续的空白字符（包括空格、换行符、制表符等）合并为单个空格
+  // - 移除首尾空白
+  normalized = normalized.replace(/\s+/g, " ").trim();
+
+  // 6. 移除HTML实体
+  normalized = normalized
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+
+  // 7. 再次清理可能产生的多余空格
   normalized = normalized.replace(/\s+/g, " ").trim();
 
   return normalized;
@@ -559,7 +579,33 @@ async function handleSubmit() {
       return;
     }
   }
+  // if (correctQuestParams.correctType != "tags") {
+  //   const originalContent = getOriginalContent();
+  //   const modifiedContent = correctQuestParams.correction;
 
+  //   // 打印原始内容和修改内容
+  //   console.log("原始内容:", originalContent);
+  //   console.log("修改内容:", modifiedContent);
+
+  //   // 打印标准化内容
+  //   console.log("标准化原始内容:", normalizeContent(originalContent));
+  //   console.log("标准化修改内容:", normalizeContent(modifiedContent));
+
+  //   // 打印公式数组
+  //   console.log("原始公式:", extractMathFormulas(originalContent));
+  //   console.log("修改公式:", extractMathFormulas(modifiedContent));
+
+  //   const hasContentChanges = checkContentChanges(
+  //     originalContent,
+  //     modifiedContent
+  //   );
+
+  //   // 如果没有任何变化，则不允许提交
+  //   if (!hasContentChanges) {
+  //     message.error("请修改后再提交");
+  //     return;
+  //   }
+  // }
   // 发送接口
   const res = await correctQuestionById(correctQuestParams);
   visible.value = false;

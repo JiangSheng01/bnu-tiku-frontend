@@ -1,24 +1,44 @@
 declare module '@wiris/mathtype-generic/wirisplugin-generic' {
-  interface WirisPlugin {
-    GenericIntegration: new (properties: any) => any;
-    Parser: {
-      initParse: (html: string) => string;
-      endParse: (html: string) => string;
-    };
-    currentInstance: any;
-  }
-
-  interface Window {
-    WirisPlugin: WirisPlugin;
-    wrs_int_init: (target: HTMLElement, toolbar?: HTMLElement, config?: any) => any;
-  }
-
   export {};
 }
 
 declare global {
+  interface GenericIntegrationProperties {
+    target: HTMLElement;
+    toolbar?: HTMLElement | null;
+    integrationParameters?: {
+      editorParameters?: {
+        language?: string;
+        fontFamily?: string;
+        fontSize?: string;
+        [key: string]: any;
+      };
+      [key: string]: any;
+    };
+    [key: string]: any;
+  }
+
+  interface GenericIntegration {
+    init(): void;
+    listeners: {
+      fire(event: string, data?: any): void;
+    };
+    modalDialog?: {
+      close(): void;
+    };
+  }
+
+  interface WirisPlugin {
+    GenericIntegration: new (properties: GenericIntegrationProperties) => GenericIntegration;
+    Parser: {
+      initParse: (html: string) => string;
+      endParse: (html: string) => string;
+    };
+    currentInstance?: GenericIntegration;
+  }
+
   interface Window {
-    WirisPlugin: any;
-    wrs_int_init: (target: HTMLElement, toolbar?: HTMLElement, config?: any) => any;
+    WirisPlugin?: WirisPlugin;
+    wrs_int_init?: (target: HTMLElement, toolbar?: HTMLElement, config?: any) => any;
   }
 }

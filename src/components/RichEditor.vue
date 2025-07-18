@@ -1,12 +1,12 @@
 <template>
   <div class="rich-editor-container">
     <!-- MathType 工具栏 -->
-    <div id="mathtype-toolbar" class="mathtype-toolbar"></div>
-    <!-- 编辑框，用内容可控的 input 或 contenteditable 实现 -->
+    <div id="mathtype-toolbar" class="mathtype-toolbar" v-if="!readonly"></div>
+    <!-- 编辑框 -->
     <div
       ref="editor"
       class="diff-edit-box"
-      contenteditable="true"
+      :contenteditable="!readonly"
       @input="onInput"
       @compositionstart="isComposing = true"
       @compositionend="onCompositionEnd"
@@ -29,10 +29,24 @@ import {
 } from "vue";
 import DiffMatchPatch from "diff-match-patch";
 
+// 类型声明扩展
+declare global {
+  interface Window {
+    WirisPlugin?: {
+      GenericIntegration: new (properties: any) => any;
+      Parser: {
+        initParse: (html: string) => string;
+        endParse: (html: string) => string;
+      };
+      currentInstance?: any;
+    };
+  }
+}
+
 // 动态导入 MathType
-const loadMathType = async () => {
+const loadMathType = async (): Promise<void> => {
   // 动态加载 MathType 脚本
-  if (typeof window !== "undefined" && !(window as any).WirisPlugin) {
+  if (typeof window !== "undefined" && !window.WirisPlugin) {
     try {
       await import("@wiris/mathtype-generic/wirisplugin-generic");
     } catch (error) {
@@ -43,6 +57,7 @@ const loadMathType = async () => {
 
 const props = defineProps<{
   text: string;
+  readonly?: boolean; // 新增
 }>();
 let index = 0;
 let { text } = toRefs(props);
@@ -134,7 +149,9 @@ const initMathType = () => {
 
   try {
     const toolbarDiv = document.getElementById("mathtype-toolbar");
-
+    if (toolbarDiv) {
+      toolbarDiv.innerHTML = ""; // 清空，防止重复
+    }
     // 使用 GenericIntegration
     const genericIntegrationProperties = {
       target: editor.value,
