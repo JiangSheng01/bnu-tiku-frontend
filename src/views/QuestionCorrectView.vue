@@ -18,7 +18,8 @@
         <b>题干内容：</b>
         <div class="divider"></div>
         <div class="question-content">
-          <rich-editor :text="question.stem" :readonly="true" />
+          <!-- <rich-editor :text="fixedStemContent" :readonly="true" /> -->
+          <div v-katex>{{ question.stem }}</div>
         </div>
         <div style="margin: 12px 0 16px 0">
           <div class="divider"></div>
@@ -29,7 +30,7 @@
         <rich-editor
           ref="richEditorRef"
           :key="editorKey"
-          :text="correctionContent"
+          :text="question.stem"
           @send-corrections="recieveCorrection"
         />
         <div style="text-align: right; margin-top: 18px">
@@ -40,7 +41,8 @@
         <b>答案内容：</b>
         <div class="divider"></div>
         <div class="question-content">
-          <rich-editor :text="question.question_answer" :readonly="true" />
+          <!-- <rich-editor :text="question.question_answer" :readonly="true" /> -->
+          <div v-katex>{{ question.question_answer }}</div>
         </div>
         <div style="margin: 12px 0 16px 0">
           <div class="divider"></div>
@@ -62,7 +64,8 @@
         <b>解析内容：</b>
         <div class="divider"></div>
         <div class="question-content">
-          <rich-editor :text="question.question_explanation" :readonly="true" />
+          <!-- <rich-editor :text="question.question_explanation" :readonly="true" /> -->
+          <div v-katex>{{ question.question_explanation }}</div>
         </div>
         <div style="margin: 12px 0 16px 0">
           <div class="divider"></div>
@@ -284,11 +287,14 @@ import { CorrectParams, correctQuestionById } from "@/api/question";
 import { useUserStore } from "@/stores/user";
 import { storeToRefs } from "pinia";
 import { syncUserFromServer } from "@/api/user";
+// const fixedStemContent = `一个正方体的
+// 棱长总和是<math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>24</mn><annotation encoding="application/vnd.wiris.mtweb-params+json">{"language": "zh", "fontFamily": "-apple-system, BlinkMacSystemFont, \\"Segoe UI\\", Roboto, \\"Helvetica Neue\\", Arial, \\"Noto Sans\\", sans-serif, \\"Apple Color Emoji\\", \\"Segoe UI Emoji\\", \\"Segoe UI Symbol\\", \\"Noto Color Emoji\\"", "fontSize": "14px"}</annotation></semantics></math>&#8203;分米，它的表面积是 <math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><munder><mrow></mrow><mo accent="true">_</mo></munder><annotation encoding="application/vnd.wiris.mtweb-params+json">{"language": "zh", "fontFamily": "-apple-system, BlinkMacSystemFont, \\"Segoe UI\\", Roboto, \\"Helvetica Neue\\", Arial, \\"Noto Sans\\", sans-serif, \\"Apple Color Emoji\\", \\"Segoe UI Emoji\\", \\"Segoe UI Symbol\\", \\"Noto Color Emoji\\"", "fontSize": "14px"}</annotation></semantics></math>&#8203; 平方分米._copy1<br>解析：`;
+// const fixedStemContent = `a`;
 const visible = defineModel<boolean>("visible", { default: false }); // 由父组件控制显示
 const question = defineModel("question", {
   default: {
     question_id: 1,
-    stem: "这里是题干内容...",
+    stem: "这里是题目内容...",
     question_answer: "这里是答案内容...",
     question_explanation: "这里是解析内容...",
     question_source: "这是来源",
@@ -353,7 +359,7 @@ watch(visible, (value, oldValue) => {
     // 弹窗打开时，重置所有编辑内容为原始值
     activeTab.value = "stem";
     correctionContent.value = question.value.stem;
-
+    console.log("Stem content:", question.value.id);
     // 重置标签编辑内容为原始值
     correctionSource.value = question.value.question_source;
     correctionDifficulty.value = question.value.difficulty;
@@ -465,42 +471,134 @@ watchEffect(() => {
   lastKnowledgePoint.value = knowledgeArray[knowledgeArray.length - 1];
 });
 
-// 内容标准化函数
+function canonicalizeLatex(src: string): string {
+  if (!src) return "";
+  let s = src.trim();
+  // 去掉外层 $$ 或 $
+  s = s.replace(/^(\${1,2})([\s\S]*?)\1$/, "$2").trim();
+  // 合并空白
+  s = s.replace(/\s+/g, " ");
+  return s;
+}
+
+// 内容标准化函数（更新后）
 function normalizeContent(content: string): string {
   if (!content) return "";
 
-  // 1. 先统一处理换行符，将 <br> 和 <br/> 转换为空格
+  // 先处理 MathML：替换为占位符，保留 LaTeX 语义
+  content = content.replace(/<math[^>]*>[\s\S]*?<\/math>/gi, (m) => {
+    const latex = m.match(
+      /<annotation[^>]*encoding=["']LaTeX["'][^>]*>([\s\S]*?)<\/annotation>/i
+    );
+    if (latex) {
+      return " MATH:" + canonicalizeLatex(latex[1]) + " ";
+    }
+    // 典型临时占位（如 sqrt(a)）直接忽略内部显示文本
+    if (
+      /<msqrt>\s*<mi>a<\/mi>\s*<\/msqrt>/i.test(m) &&
+      /application\/vnd\.wiris\.mtweb-params\+json/i.test(m)
+    ) {
+      return " MATH "; // 占位
+    }
+    return " MATH ";
+  });
+
+  // 处理 Wiris 图片（含 data-mathml）
+  content = content.replace(
+    /<img[^>]*class="Wirisformula"[^>]*data-mathml="([^"]*)"[^>]*>/gi,
+    (_m, g1) => {
+      const decoded = g1.replace(/«/g, "<").replace(/»/g, ">");
+      const latex = decoded.match(
+        /<annotation[^>]*encoding=["']LaTeX["'][^>]*>([\s\S]*?)<\/annotation>/i
+      );
+      return latex ? " MATH:" + canonicalizeLatex(latex[1]) + " " : " MATH ";
+    }
+  );
+
+  // 处理 $$...$$ （先于行内 $...$；非贪婪）
+  content = content.replace(/\$\$([\s\S]+?)\$\$/g, (_m, g1) => {
+    return " MATH:" + canonicalizeLatex(g1) + " ";
+  });
+
+  // 行内 $...$（确保不是 $$）
+  content = content.replace(
+    /(^|[^$])\$(?!\$)([^$]+?)\$(?!\$)/g,
+    (m, pre, body) => {
+      return pre + " MATH:" + canonicalizeLatex(body) + " ";
+    }
+  );
+
+  // <br> → 空格
   content = content.replace(/<br\s*\/?>/gi, " ");
 
-  // 2. 去掉 LaTeX 注释
+  // 去掉 annotation（前面已提取 LaTeX）
   content = content.replace(/<annotation[^>]*>[\s\S]*?<\/annotation>/gi, "");
 
-  // 3. 创建临时 div 来处理 HTML
+  // 去标签
   const tempDiv = document.createElement("div");
   tempDiv.innerHTML = content;
-
-  // 4. 移除所有 HTML 标签，只保留纯文本
   let normalized = tempDiv.innerText || tempDiv.textContent || "";
 
-  // 5. 统一处理空白字符：
-  // - 将连续的空白字符（包括空格、换行符、制表符等）合并为单个空格
-  // - 移除首尾空白
-  normalized = normalized.replace(/\s+/g, " ").trim();
-
-  // 6. 移除HTML实体
+  // 解实体
   normalized = normalized
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'");
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'");
 
-  // 7. 再次清理可能产生的多余空格
+  // 合并重复占位：MATH:xxx / MATH
+  normalized = normalized.replace(
+    /\bMATH(?::[^\s]+)?\b(\s+\bMATH(?::[^\s]+)?\b)+/g,
+    (m) => {
+      // 保留第一项
+      return m.split(/\s+/)[0];
+    }
+  );
+
+  // 统一空白
   normalized = normalized.replace(/\s+/g, " ").trim();
 
   return normalized;
 }
+
+// 内容标准化函数
+// function normalizeContent(content: string): string {
+//   if (!content) return "";
+
+//   // 1. 先统一处理换行符，将 <br> 和 <br/> 转换为空格
+//   content = content.replace(/<br\s*\/?>/gi, " ");
+
+//   // 2. 去掉 LaTeX 注释
+//   content = content.replace(/<annotation[^>]*>[\s\S]*?<\/annotation>/gi, "");
+
+//   // 3. 创建临时 div 来处理 HTML
+//   const tempDiv = document.createElement("div");
+//   tempDiv.innerHTML = content;
+
+//   // 4. 移除所有 HTML 标签，只保留纯文本
+//   let normalized = tempDiv.innerText || tempDiv.textContent || "";
+
+//   // 5. 统一处理空白字符：
+//   // - 将连续的空白字符（包括空格、换行符、制表符等）合并为单个空格
+//   // - 移除首尾空白
+//   normalized = normalized.replace(/\s+/g, " ").trim();
+
+//   // 6. 移除HTML实体
+//   normalized = normalized
+//     .replace(/&nbsp;/g, " ")
+//     .replace(/&amp;/g, "&")
+//     .replace(/&lt;/g, "<")
+//     .replace(/&gt;/g, ">")
+//     .replace(/&quot;/g, '"')
+//     .replace(/&#39;/g, "'");
+
+//   // 7. 再次清理可能产生的多余空格
+//   normalized = normalized.replace(/\s+/g, " ").trim();
+
+//   return normalized;
+// }
 
 // 检查内容变化的函数
 function checkContentChanges(
@@ -558,46 +656,11 @@ async function handleSubmit() {
   };
 
   // 检查是否有内容变化的逻辑
-  if (correctQuestParams.correctType != "tags") {
-    const originalContent = getOriginalContent();
-    const hasContentChanges = checkContentChanges(
-      originalContent,
-      correctQuestParams.correction
-    );
-
-    // 如果没有任何变化，则不允许提交
-    if (!hasContentChanges) {
-      message.error("请修改后再提交");
-      return;
-    }
-  } else {
-    console.log(correctQuestParams.correctTags);
-
-    const b = areAllValuesEmpty(correctQuestParams.correctTags);
-    if (b) {
-      message.error("请修改后再提交");
-      return;
-    }
-  }
   // if (correctQuestParams.correctType != "tags") {
   //   const originalContent = getOriginalContent();
-  //   const modifiedContent = correctQuestParams.correction;
-
-  //   // 打印原始内容和修改内容
-  //   console.log("原始内容:", originalContent);
-  //   console.log("修改内容:", modifiedContent);
-
-  //   // 打印标准化内容
-  //   console.log("标准化原始内容:", normalizeContent(originalContent));
-  //   console.log("标准化修改内容:", normalizeContent(modifiedContent));
-
-  //   // 打印公式数组
-  //   console.log("原始公式:", extractMathFormulas(originalContent));
-  //   console.log("修改公式:", extractMathFormulas(modifiedContent));
-
   //   const hasContentChanges = checkContentChanges(
   //     originalContent,
-  //     modifiedContent
+  //     correctQuestParams.correction
   //   );
 
   //   // 如果没有任何变化，则不允许提交
@@ -605,11 +668,46 @@ async function handleSubmit() {
   //     message.error("请修改后再提交");
   //     return;
   //   }
+  // } else {
+  //   console.log(correctQuestParams.correctTags);
+
+  //   const b = areAllValuesEmpty(correctQuestParams.correctTags);
+  //   if (b) {
+  //     message.error("请修改后再提交");
+  //     return;
+  //   }
   // }
+  if (correctQuestParams.correctType != "tags") {
+    const originalContent = getOriginalContent();
+    const modifiedContent = correctQuestParams.correction;
+
+    // 打印原始内容和修改内容
+    console.log("原始内容:", originalContent);
+    console.log("修改内容:", modifiedContent);
+
+    // 打印标准化内容
+    console.log("标准化原始内容:", normalizeContent(originalContent));
+    console.log("标准化修改内容:", normalizeContent(modifiedContent));
+
+    // 打印公式数组
+    console.log("原始公式:", extractMathFormulas(originalContent));
+    console.log("修改公式:", extractMathFormulas(modifiedContent));
+
+    const hasContentChanges = checkContentChanges(
+      originalContent,
+      modifiedContent
+    );
+
+    // 如果没有任何变化，则不允许提交
+    if (!hasContentChanges) {
+      message.error("请修改后再提交");
+      return;
+    }
+  }
   // 发送接口
   const res = await correctQuestionById(correctQuestParams);
   visible.value = false;
-
+  console.log(correctQuestParams.correction);
   if (res.data.code == "SUCCESS") {
     message.success("修改已提交");
   } else {
@@ -745,6 +843,8 @@ function recieveCorrection(res: any) {
 .question-content {
   overflow: auto;
   max-height: 250px;
+  white-space: pre-line; /* 关键: 保留 \n 为换行 */
+  line-height: 1.6;
 }
 </style>
 

@@ -6,12 +6,12 @@
     <div
       ref="editor"
       class="diff-edit-box"
+      :class="{ readonly: readonly }"
       :contenteditable="!readonly"
       @input="onInput"
       @compositionstart="isComposing = true"
       @compositionend="onCompositionEnd"
       @keydown="onKeydown"
-      style="min-height: 120px; border: 1px solid #ccc; padding: 10px"
       @blur="computeFinalText"
     ></div>
   </div>
@@ -25,7 +25,7 @@ import {
   onUnmounted,
   ref,
   toRefs,
-  watchEffect,
+  nextTick,
 } from "vue";
 import DiffMatchPatch from "diff-match-patch";
 
@@ -57,7 +57,7 @@ const loadMathType = async (): Promise<void> => {
 
 const props = defineProps<{
   text: string;
-  readonly?: boolean; // 新增
+  readonly?: boolean;
 }>();
 let index = 0;
 let { text } = toRefs(props);
@@ -83,21 +83,35 @@ function html2text(html: string) {
 }
 
 onMounted(async () => {
-  // 加载 MathType
+  // 步骤 1: 确保 MathType 脚本已加载
   await loadMathType();
 
-  // 初始化编辑器内容
-  editor.value!.innerText = html2text(text.value);
+  // 步骤 2: 等待 DOM 渲染完成，确保 editor.value 可用
+  await nextTick();
 
-  // 解析 MathML 为图片显示
-  if (window.WirisPlugin && window.WirisPlugin.Parser) {
-    editor.value!.innerHTML = window.WirisPlugin.Parser.initParse(text.value);
-  } else {
-    editor.value!.innerHTML = text.value;
+  if (!editor.value) {
+    console.error("编辑器元素未找到，初始化失败。");
+    return;
   }
 
-  // 初始化 MathType 集成
-  initMathType();
+  // MathML → 可视化的 <img> 公式。
+  let finalHtmlToRender = text.value;
+  if (window.WirisPlugin?.Parser) {
+    try {
+      finalHtmlToRender = window.WirisPlugin.Parser.initParse(text.value);
+    } catch (e) {
+      console.warn("MathType initParse 失败，将使用原始内容。", e);
+    }
+  }
+
+  // 步骤 4: 将 initParse 完全处理后的 HTML 设置到编辑器中。
+  // 此时 finalHtmlToRender 应该已经包含了 <img> 标签。
+  editor.value.innerHTML = finalHtmlToRender;
+  // 步骤 5: 初始化 MathType 实例，主要是为了加载工具栏。
+  if (!props.readonly) {
+    initMathType();
+  }
+  // initMathType();
 
   applyDiff();
 });
@@ -160,12 +174,11 @@ const initMathType = () => {
         editorParameters: {
           language: "zh",
           // 确保公式样式与页面一致
-          fontFamily: "Arial, sans-serif",
-          fontSize: "16px",
+          fontFamily: window.getComputedStyle(editor.value).fontFamily,
+          fontSize: window.getComputedStyle(editor.value).fontSize,
         },
       },
     };
-
     mathTypeInstance = new window.WirisPlugin.GenericIntegration(
       genericIntegrationProperties
     );
@@ -216,18 +229,6 @@ function applyDiff() {
   el.innerHTML = merged; // ② 更新高亮
   restoreCaret(el, caret); // ③ 还原光标
 }
-
-// function applyDiff(currentHtml: string) {
-//   const plain = html2text(currentHtml); // 把当前内容也转纯文本
-//   const htmlDiff = diffHighlight(plain); // 用 diff-match-patch
-//
-//   // 再把 diff 结果“映射回 html”：
-//   //   - 换行用 <br>
-//   //   - 图片占位 "[图片]" 用原 <img …> 标签
-//   const merged = restoreTags(htmlDiff, currentHtml);
-//   editor.value!.innerHTML = merged;
-//   restoreCaret(editor.value!, savedPos);
-// }
 
 function onInput() {
   if (isComposing.value) return;
@@ -321,7 +322,7 @@ function computeFinalText() {
   if (window.WirisPlugin && window.WirisPlugin.Parser) {
     finalContent = window.WirisPlugin.Parser.endParse(finalContent);
   }
-
+  // finalContent = finalContent.replace(/<br\s*\/?>/gi, "\n");
   emit("sendCorrections", {
     correction: finalContent,
   });
@@ -333,7 +334,12 @@ function computeFinalText() {
   max-height: 300px;
   overflow: auto;
 }
-
+.diff-edit-box.readonly {
+  user-select: none; /* 禁止文本选择 */
+  pointer-events: none; /* 禁用所有鼠标事件 */
+  border: none; /* 移除边框 */
+  padding: 10px; /* 保持内边距 */
+}
 .mathtype-toolbar {
   border: 1px solid #ccc;
   border-bottom: none;
@@ -347,6 +353,9 @@ function computeFinalText() {
 }
 
 .diff-edit-box {
+  min-height: 120px;
+  border: 1px solid #ccc;
+  padding: 10px;
   border-radius: 0 0 4px 4px !important;
 }
 
