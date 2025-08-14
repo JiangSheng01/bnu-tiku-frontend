@@ -293,8 +293,8 @@ import { syncUserFromServer } from "@/api/user";
 const visible = defineModel<boolean>("visible", { default: false }); // 由父组件控制显示
 const question = defineModel("question", {
   default: {
-    question_id: 1,
-    stem: "这里是题目内容...",
+    question_id: 0,
+    // stem: fixedStemContent,
     question_answer: "这里是答案内容...",
     question_explanation: "这里是解析内容...",
     question_source: "这是来源",
@@ -656,46 +656,11 @@ async function handleSubmit() {
   };
 
   // 检查是否有内容变化的逻辑
-  // if (correctQuestParams.correctType != "tags") {
-  //   const originalContent = getOriginalContent();
-  //   const hasContentChanges = checkContentChanges(
-  //     originalContent,
-  //     correctQuestParams.correction
-  //   );
-
-  //   // 如果没有任何变化，则不允许提交
-  //   if (!hasContentChanges) {
-  //     message.error("请修改后再提交");
-  //     return;
-  //   }
-  // } else {
-  //   console.log(correctQuestParams.correctTags);
-
-  //   const b = areAllValuesEmpty(correctQuestParams.correctTags);
-  //   if (b) {
-  //     message.error("请修改后再提交");
-  //     return;
-  //   }
-  // }
   if (correctQuestParams.correctType != "tags") {
     const originalContent = getOriginalContent();
-    const modifiedContent = correctQuestParams.correction;
-
-    // 打印原始内容和修改内容
-    console.log("原始内容:", originalContent);
-    console.log("修改内容:", modifiedContent);
-
-    // 打印标准化内容
-    console.log("标准化原始内容:", normalizeContent(originalContent));
-    console.log("标准化修改内容:", normalizeContent(modifiedContent));
-
-    // 打印公式数组
-    console.log("原始公式:", extractMathFormulas(originalContent));
-    console.log("修改公式:", extractMathFormulas(modifiedContent));
-
     const hasContentChanges = checkContentChanges(
       originalContent,
-      modifiedContent
+      correctQuestParams.correction
     );
 
     // 如果没有任何变化，则不允许提交
@@ -703,7 +668,42 @@ async function handleSubmit() {
       message.error("请修改后再提交");
       return;
     }
+  } else {
+    console.log(correctQuestParams.correctTags);
+
+    const b = areAllValuesEmpty(correctQuestParams.correctTags);
+    if (b) {
+      message.error("请修改后再提交");
+      return;
+    }
   }
+  // if (correctQuestParams.correctType != "tags") {
+  //   const originalContent = getOriginalContent();
+  //   const modifiedContent = correctQuestParams.correction;
+
+  //   // 打印原始内容和修改内容
+  //   console.log("原始内容:", originalContent);
+  //   console.log("修改内容:", modifiedContent);
+
+  //   // 打印标准化内容
+  //   console.log("标准化原始内容:", normalizeContent(originalContent));
+  //   console.log("标准化修改内容:", normalizeContent(modifiedContent));
+
+  //   // 打印公式数组
+  //   console.log("原始公式:", extractMathFormulas(originalContent));
+  //   console.log("修改公式:", extractMathFormulas(modifiedContent));
+
+  //   const hasContentChanges = checkContentChanges(
+  //     originalContent,
+  //     modifiedContent
+  //   );
+
+  //   // 如果没有任何变化，则不允许提交
+  //   if (!hasContentChanges) {
+  //     message.error("请修改后再提交");
+  //     return;
+  //   }
+  // }
   // 发送接口
   const res = await correctQuestionById(correctQuestParams);
   visible.value = false;
